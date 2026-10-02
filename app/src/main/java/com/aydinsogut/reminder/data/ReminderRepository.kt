@@ -5,7 +5,10 @@ import androidx.glance.appwidget.updateAll
 import com.aydinsogut.reminder.alarm.AlarmScheduler
 import com.aydinsogut.reminder.alarm.NotificationHelper
 import com.aydinsogut.reminder.alarm.ReminderSpeaker
+import com.aydinsogut.reminder.ui.theme.ReminderPalette
+import com.aydinsogut.reminder.util.TurkishReminderParser
 import com.aydinsogut.reminder.util.startOfDayMillis
+import com.aydinsogut.reminder.util.toEpochMillis
 import com.aydinsogut.reminder.widget.ReminderWidget
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -29,6 +32,22 @@ class ReminderRepository(
     /** Bugünün başından itibaren tamamlanmamış hatırlatıcılar (widget için). */
     suspend fun upcoming(limit: Int): List<Reminder> =
         dao.getUpcoming(LocalDate.now().startOfDayMillis(), limit)
+
+    /**
+     * Kalemle bir güne yazılan metni kaydeder: yazıda saat varsa o saate, yoksa varsayılan
+     * saate kurulur. Kaydedileni döndürür (geri almak için).
+     */
+    suspend fun addFromText(text: String, date: LocalDate): Reminder? {
+        if (text.isBlank()) return null
+        val parsed = TurkishReminderParser.parseForDay(text, date, settings.current().defaultTime)
+        val dateTime = parsed.dateTime ?: return null
+        val reminder = Reminder(
+            title = parsed.title,
+            triggerAt = dateTime.toEpochMillis(),
+            colorIndex = (date.dayOfMonth + parsed.title.length).mod(ReminderPalette.colors.size),
+        )
+        return reminder.copy(id = save(reminder))
+    }
 
     suspend fun save(reminder: Reminder): Long {
         val id = if (reminder.id == 0L) {

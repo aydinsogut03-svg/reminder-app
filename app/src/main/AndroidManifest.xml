@@ -35,6 +35,15 @@
                 android:resource="@xml/shortcuts" />
         </activity>
 
+        <!-- Widget'tan açılan küçük kalem penceresi; ana uygulamadan ayrı, son kullanılanlarda görünmez -->
+        <activity
+            android:name=".ui.quick.QuickInkActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Reminder.QuickInk" />
+
         <receiver
             android:name=".alarm.ReminderReceiver"
             android:exported="false" />

@@ -42,6 +42,9 @@ import com.aydinsogut.reminder.alarm.ReminderIntents
 import com.aydinsogut.reminder.appContainer
 import com.aydinsogut.reminder.data.Reminder
 import com.aydinsogut.reminder.ui.MainActivity
+import com.aydinsogut.reminder.ui.quick.QuickInkActivity
+import com.aydinsogut.reminder.util.TurkishLocale
+import com.aydinsogut.reminder.util.toLocalDate
 import com.aydinsogut.reminder.ui.theme.ReminderPalette
 import com.aydinsogut.reminder.util.TimeFormats
 import com.aydinsogut.reminder.util.capitalizeTr
@@ -50,9 +53,10 @@ import com.aydinsogut.reminder.util.formatReminderTime
 
 class ReminderWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val reminders = context.appContainer.repository.upcoming(limit = 8)
+        val upcoming = context.appContainer.repository.upcoming(limit = 40)
+        val busyDays = upcoming.map { it.triggerAt.toLocalDate() }.toSet()
         provideContent {
-            WidgetContent(context, reminders)
+            WidgetContent(context, upcoming.take(8), busyDays)
         }
     }
 }
@@ -64,11 +68,13 @@ class ReminderWidgetReceiver : GlanceAppWidgetReceiver() {
 private val WidgetBackground = DayNightColor(day = Color(0xFFFFFFFF), night = Color(0xFF171A23))
 private val WidgetText = DayNightColor(day = Color(0xFF111827), night = Color(0xFFE7E9F1))
 private val WidgetSubtle = DayNightColor(day = Color(0xFF5B6275), night = Color(0xFFA3A9BC))
-private val WidgetPrimary = DayNightColor(day = Color(0xFF4F46E5), night = Color(0xFFA5B4FC))
-private val WidgetItemBackground = DayNightColor(day = Color(0xFFF3F4FA), night = Color(0xFF222634))
+private val WidgetPrimary = DayNightColor(day = Color(0xFF5B5FE3), night = Color(0xFFA5B4FC))
+private val WidgetItemBackground = DayNightColor(day = Color(0xFFF4F4FA), night = Color(0xFF222634))
+private val WidgetOnPrimary = DayNightColor(day = Color.White, night = Color(0xFF1E1B4B))
+private val WidgetPaper = DayNightColor(day = Color(0xFFFFF8EC), night = Color(0xFF2A2418))
 
 @Composable
-private fun WidgetContent(context: Context, reminders: List<Reminder>) {
+private fun WidgetContent(context: Context, reminders: List<Reminder>, busyDays: Set<LocalDate>) {
     val openApp = Intent(context, MainActivity::class.java)
     val addNew = Intent(context, MainActivity::class.java)
         .setAction(ReminderIntents.ACTION_ADD)
@@ -134,13 +140,17 @@ private fun WidgetContent(context: Context, reminders: List<Reminder>) {
             }
         }
         Spacer(GlanceModifier.height(10.dp))
+        WeekStrip(context, busyDays)
+        Spacer(GlanceModifier.height(8.dp))
+        PenPad(context)
+        Spacer(GlanceModifier.height(8.dp))
         if (reminders.isEmpty()) {
             Box(
-                modifier = GlanceModifier.fillMaxSize().clickable(actionStartActivity(addNew)),
+                modifier = GlanceModifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "Yaklaşan hatırlatıcı yok.\nEklemek için dokun.",
+                    text = "Yaklaşan hatırlatıcı yok.",
                     style = TextStyle(color = WidgetSubtle, fontSize = 13.sp, textAlign = TextAlign.Center),
                 )
             }
@@ -151,6 +161,92 @@ private fun WidgetContent(context: Context, reminders: List<Reminder>) {
                 }
             }
         }
+    }
+}
+
+/** Bugünden başlayan 7 gün; bir güne dokununca o gün için kalem penceresi açılır. */
+@Composable
+private fun WeekStrip(context: Context, busyDays: Set<LocalDate>) {
+    val today = LocalDate.now()
+    Row(modifier = GlanceModifier.fillMaxWidth()) {
+        for (offset in 0 until 7) {
+            val day = today.plusDays(offset.toLong())
+            val isToday = offset == 0
+            Column(
+                modifier = GlanceModifier
+                    .defaultWeight()
+                    .padding(horizontal = 2.dp)
+                    .clickable(actionStartActivity(QuickInkActivity.intent(context, day))),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Column(
+                    modifier = GlanceModifier
+                        .fillMaxWidth()
+                        .background(if (isToday) WidgetPrimary else WidgetItemBackground)
+                        .cornerRadius(12.dp)
+                        .padding(vertical = 5.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = day.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, TurkishLocale).capitalizeTr(),
+                        style = TextStyle(
+                            fontSize = 10.sp,
+                            color = if (isToday) WidgetOnPrimary else WidgetSubtle,
+                            textAlign = TextAlign.Center,
+                        ),
+                        maxLines = 1,
+                    )
+                    Text(
+                        text = day.dayOfMonth.toString(),
+                        style = TextStyle(
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isToday) WidgetOnPrimary else WidgetText,
+                            textAlign = TextAlign.Center,
+                        ),
+                    )
+                    Box(
+                        modifier = GlanceModifier
+                            .size(4.dp)
+                            .cornerRadius(2.dp)
+                            .background(
+                                when {
+                                    day !in busyDays -> DayNightColor(day = Color.Transparent, night = Color.Transparent)
+                                    isToday -> WidgetOnPrimary
+                                    else -> WidgetPrimary
+                                },
+                            ),
+                    ) {}
+                }
+            }
+        }
+    }
+}
+
+/** Kalem alanı: dokununca bugün için kalem penceresi açılır. */
+@Composable
+private fun PenPad(context: Context) {
+    Row(
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .height(52.dp)
+            .background(WidgetPaper)
+            .cornerRadius(16.dp)
+            .padding(horizontal = 14.dp)
+            .clickable(actionStartActivity(QuickInkActivity.intent(context, LocalDate.now()))),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(
+            provider = ImageProvider(R.drawable.ic_widget_pen),
+            contentDescription = null,
+            modifier = GlanceModifier.size(20.dp),
+        )
+        Spacer(GlanceModifier.width(10.dp))
+        Text(
+            text = "Kalemle yaz… (bir güne dokunarak tarih seç)",
+            style = TextStyle(fontSize = 13.sp, color = WidgetSubtle),
+            maxLines = 1,
+        )
     }
 }
 

@@ -4,10 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aydinsogut.reminder.data.Reminder
 import com.aydinsogut.reminder.data.ReminderRepository
-import com.aydinsogut.reminder.data.SettingsRepository
-import com.aydinsogut.reminder.ui.theme.ReminderPalette
-import com.aydinsogut.reminder.util.TurkishReminderParser
-import com.aydinsogut.reminder.util.toEpochMillis
 import com.aydinsogut.reminder.util.toLocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,10 +23,7 @@ data class CalendarUiState(
     val selectedItems: List<Reminder> = emptyList(),
 )
 
-class CalendarViewModel(
-    private val repository: ReminderRepository,
-    private val settings: SettingsRepository,
-) : ViewModel() {
+class CalendarViewModel(private val repository: ReminderRepository) : ViewModel() {
     private val month = MutableStateFlow(YearMonth.now())
     private val selected = MutableStateFlow(LocalDate.now())
 
@@ -61,18 +54,7 @@ class CalendarViewModel(
     }
 
     /** Kalemle yazılan metni seçili güne hatırlatıcı olarak kaydeder; kaydedileni döndürür (geri almak için). */
-    suspend fun addFromInk(text: String, date: LocalDate): Reminder? {
-        if (text.isBlank()) return null
-        val parsed = TurkishReminderParser.parseForDay(text, date, settings.current().defaultTime)
-        val dateTime = parsed.dateTime ?: return null
-        val reminder = Reminder(
-            title = parsed.title,
-            triggerAt = dateTime.toEpochMillis(),
-            colorIndex = (date.dayOfMonth + parsed.title.length).mod(ReminderPalette.colors.size),
-        )
-        val id = repository.save(reminder)
-        return reminder.copy(id = id)
-    }
+    suspend fun addFromInk(text: String, date: LocalDate): Reminder? = repository.addFromText(text, date)
 
     fun undoAdd(reminder: Reminder) {
         viewModelScope.launch { repository.delete(reminder) }

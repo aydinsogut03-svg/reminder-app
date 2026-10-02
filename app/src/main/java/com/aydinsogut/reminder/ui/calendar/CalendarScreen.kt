@@ -83,7 +83,7 @@ fun CalendarScreen(
     modifier: Modifier = Modifier,
 ) {
     val container = LocalContext.current.appContainer
-    val viewModel = viewModel { CalendarViewModel(container.repository, container.settings) }
+    val viewModel = viewModel { CalendarViewModel(container.repository) }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val settings by container.settings.settings.collectAsStateWithLifecycle(initialValue = AppSettings())
     val isToday = state.selected == LocalDate.now()

@@ -2,14 +2,14 @@
 
 Android hatırlatıcı uygulaması: bildirim gönderir, ana ekran widget'ı vardır ve takvimde günlere not düşmeyi sağlar.
 
-## Özellikler (v0.5)
+## Özellikler (v0.6)
 
 - Hatırlatıcı ekleme, düzenleme, silme (başlık, not, tarih, saat)
 - Zamanı gelince bildirim, bildirimden **Tamamlandı** ve **10 dk ertele**
 - Tekrarlama: her gün, hafta, ay, yıl
-- Ana sayfa: sıradaki uyarı ve geri sayım, kalem/ses/yeni hızlı düğmeleri, **Yaklaşan** ve **Geçmiş** (kaçırılan + tamamlanan) sekmeleri
+- Açılış ekranı kalemli takvim. Uyarılar sekmesi: sıradaki uyarı ve geri sayım, kalem/ses/yeni hızlı düğmeleri, **Yaklaşan** ve **Geçmiş** (kaçırılan + tamamlanan) sekmeleri
 - Aylık takvim: notu olan günler işaretli; altında hep açık yazı alanı var, kalemle yazınca seçili güne kendiliğinden eklenir ("10'da dişçi" gibi saat yazılırsa o saate kurulur)
-- Ana ekran widget'ı: yaklaşan hatırlatıcılar ve hızlı ekleme
+- Ana ekran widget'ı: 7 günlük şerit ve kalem alanı; bir güne dokununca küçük bir kalem penceresi açılır, yazılan o güne varsayılan saatle (ya da yazılan saatle) eklenir. Altında yaklaşan hatırlatıcılar
 - Telefon yeniden başlayınca alarmlar korunur
 - Sesle ekleme: "yarın saat 9'da annemi ara" gibi Türkçe cümlelerden başlık ve zamanı internetsiz anlar (`util/TurkishReminderParser.kt`)
 - Kalemle yazma: S Pen ya da parmakla el yazısı, ML Kit Digital Ink ile cihaz içinde Türkçe metne çevrilir (`ui/ink`, `ai/HandwritingRecognizer.kt`)

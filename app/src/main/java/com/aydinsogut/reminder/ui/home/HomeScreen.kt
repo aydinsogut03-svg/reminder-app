@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -34,8 +34,8 @@ import java.time.LocalDate
 private data class Tab(val label: String, val icon: ImageVector)
 
 private val Tabs = listOf(
-    Tab("Ana sayfa", Icons.Rounded.Home),
     Tab("Takvim", Icons.Rounded.CalendarMonth),
+    Tab("Uyarılar", Icons.Rounded.NotificationsActive),
     Tab("Ayarlar", Icons.Rounded.Settings),
 )
 
@@ -47,7 +47,7 @@ fun HomeScreen(
     calendarSignal: Int = 0,
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
-    LaunchedEffect(calendarSignal) { if (calendarSignal > 0) tab = 1 }
+    LaunchedEffect(calendarSignal) { if (calendarSignal > 0) tab = 0 }
     val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
@@ -78,17 +78,17 @@ fun HomeScreen(
         Column(Modifier.padding(padding)) {
             PermissionBanners()
             when (tab) {
-                0 -> DashboardScreen(
+                0 -> CalendarScreen(
+                    onAddForDate = onAdd,
                     onOpen = onOpen,
-                    onAdd = { onAdd(null) },
-                    onVoice = onVoice,
-                    onInk = { tab = 1 },
                     snackbarHostState = snackbarHostState,
                     modifier = Modifier.weight(1f),
                 )
-                1 -> CalendarScreen(
-                    onAddForDate = onAdd,
+                1 -> DashboardScreen(
                     onOpen = onOpen,
+                    onAdd = { onAdd(null) },
+                    onVoice = onVoice,
+                    onInk = { tab = 0 },
                     snackbarHostState = snackbarHostState,
                     modifier = Modifier.weight(1f),
                 )

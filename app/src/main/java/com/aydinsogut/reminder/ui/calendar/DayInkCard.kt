@@ -47,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.aydinsogut.reminder.ai.InkStroke
@@ -74,6 +75,7 @@ fun DayInkCard(
     defaultTime: LocalTime,
     onSubmit: (String) -> Unit,
     modifier: Modifier = Modifier,
+    padHeight: Dp = 210.dp,
 ) {
     val recognizer = LocalContext.current.appContainer.handwriting
     val modelState by rememberInkModelState(recognizer)
@@ -157,7 +159,7 @@ fun DayInkCard(
                 lineSpacing = 50.dp,
                 lineColor = colors.tertiary.soft(0.18f),
                 onStrokeStart = { penDowns++ },
-                modifier = Modifier.fillMaxWidth().height(170.dp).padding(end = 8.dp),
+                modifier = Modifier.fillMaxWidth().height(padHeight).padding(end = 8.dp),
             )
 
             AnimatedVisibility(
