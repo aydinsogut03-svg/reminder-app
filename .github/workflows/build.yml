@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -26,3 +28,15 @@ jobs:
         with:
           name: hatirlatici-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: APK'yı "Son sürüm" sayfasına koy
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk hatirlatici.apk
+          gh release delete son-surum --cleanup-tag --yes || true
+          gh release create son-surum hatirlatici.apk \
+            --title "Son sürüm (debug)" \
+            --notes "main dalının son hali: ${GITHUB_SHA::7}. Telefona kurmak için hatirlatici.apk dosyasını indir." \
+            --prerelease --target "$GITHUB_SHA"
