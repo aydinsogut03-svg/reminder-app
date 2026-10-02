@@ -1,0 +1,24 @@
+name: probe
+on:
+  push:
+    branches: [probe]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - run: |
+          M=https://dl.google.com/dl/android/maven2/com/google/mlkit
+          for a in genai-prompt genai-summarization genai-common digital-ink-recognition; do
+            echo "== $a"; curl -s $M/$a/maven-metadata.xml | grep -E "<version>|<latest>|<release>" | tail -6
+          done
+          V=$(curl -s $M/genai-prompt/maven-metadata.xml | grep -oP '(?<=<latest>)[^<]+')
+          echo "PROMPT VERSION $V"
+          curl -sfo p.aar $M/genai-prompt/$V/genai-prompt-$V.aar && unzip -oq p.aar classes.jar -d p && cd p && jar tf classes.jar | grep -v '\$' | grep '\.class' | head -60
+          for c in $(jar tf classes.jar | grep -v '\$' | grep '\.class$' | sed 's/\.class$//' | grep -iE 'Generation|GenerativeModel|GenerateContent|Request|Response|Candidate|FeatureStatus|TextPart|Content|Download' ); do javap -cp classes.jar -public "$c" 2>/dev/null; done | head -400
+          curl -s $M/genai-prompt/$V/genai-prompt-$V.pom | grep -A3 "<dependency>" | grep -E "artifactId|version"
+      - run: |
+          M=https://dl.google.com/dl/android/maven2/com/google/mlkit
+          V=$(curl -s $M/genai-common/maven-metadata.xml | grep -oP '(?<=<latest>)[^<]+'); echo COMMON $V
+          curl -sfo c.aar $M/genai-common/$V/genai-common-$V.aar && unzip -oq c.aar classes.jar -d c && cd c && for c in $(jar tf classes.jar | grep -v '\$' | grep '\.class$' | sed 's/\.class$//' | grep -iE 'FeatureStatus|DownloadCallback|DownloadStatus|GenAiException'); do javap -cp classes.jar -public "$c"; done | head -150
