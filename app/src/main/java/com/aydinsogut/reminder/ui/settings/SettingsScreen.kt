@@ -12,6 +12,7 @@ import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material.icons.rounded.IosShare
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Widgets
+import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
@@ -257,6 +258,19 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                             label = { Text(if (seconds == 0) "Kapalı" else "$seconds sn") },
                         )
                     }
+                }
+                Divider()
+                SettingRow(
+                    icon = Icons.Rounded.TouchApp,
+                    tint = ReminderPalette.color(3),
+                    title = "Parmakla da yaz",
+                    subtitle = if (settings.fingerDrawing) {
+                        "Takvimdeki alana parmakla da yazılır; kaydırmak için alanın dışından kaydır"
+                    } else {
+                        "Kapalı: takvimde yalnızca S Pen yazar, parmakla kaydırırken çizmez"
+                    },
+                ) {
+                    Switch(checked = settings.fingerDrawing, onCheckedChange = viewModel::setFingerDrawing)
                 }
                 Divider()
                 SettingRow(

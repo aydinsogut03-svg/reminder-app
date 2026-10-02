@@ -161,6 +161,7 @@ fun CalendarScreen(
                 date = state.selected,
                 defaultTime = settings.defaultTime,
                 autoSaveSeconds = settings.inkAutoSaveSeconds,
+                fingerDrawing = settings.fingerDrawing,
                 onSubmit = ::saveInk,
             )
         }

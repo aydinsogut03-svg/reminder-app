@@ -60,6 +60,8 @@ class SettingsViewModel(
 
     fun setInkAutoSaveSeconds(value: Int) = launch { repository.setInkAutoSaveSeconds(value) }
 
+    fun setFingerDrawing(value: Boolean) = launch { repository.setFingerDrawing(value) }
+
     fun setShareSignature(value: Boolean) = launch { repository.setShareSignature(value) }
 
     fun setShareEmail(value: String) = launch { repository.setShareEmail(value) }

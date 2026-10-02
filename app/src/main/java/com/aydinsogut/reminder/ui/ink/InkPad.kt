@@ -19,6 +19,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -58,8 +59,9 @@ fun rememberInkModelState(recognizer: HandwritingRecognizer): State<InkModelStat
 }
 
 /**
- * Çizgili yazı alanı. S Pen bir kez dokunduktan sonra parmak dokunuşları yazı sayılmaz
- * (avuç içi); bu dokunuşlar tüketilmediği için içinde bulunduğu liste kaydırılabilir kalır.
+ * Çizgili yazı alanı. [fingerDrawing] kapalıysa yalnızca S Pen yazar, parmak dokunuşları
+ * tüketilmez ve içinde bulunduğu sayfa kaydırılabilir kalır. Açıksa parmak da yazar; ama
+ * S Pen bir kez dokunduktan sonra parmak dokunuşları (avuç içi) yine yok sayılır.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -72,7 +74,9 @@ fun InkCanvas(
     inkColor: Color = MaterialTheme.colorScheme.onSurface,
     lineColor: Color = MaterialTheme.colorScheme.outlineVariant,
     onStrokeStart: () -> Unit = {},
+    fingerDrawing: Boolean = true,
 ) {
+    val allowFinger by rememberUpdatedState(fingerDrawing)
     var current by remember { mutableStateOf<InkStroke?>(null) }
     var stylusSeen by remember { mutableStateOf(false) }
 
@@ -85,7 +89,7 @@ fun InkCanvas(
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
                         val isStylus = down.type == PointerType.Stylus || down.type == PointerType.Eraser
-                        if (stylusSeen && !isStylus) return@awaitEachGesture
+                        if (!isStylus && (!allowFinger || stylusSeen)) return@awaitEachGesture
                         if (isStylus) stylusSeen = true
                         onStrokeStart()
                         val points = mutableListOf(InkPoint(down.position.x, down.position.y, down.uptimeMillis))

@@ -75,6 +75,8 @@ fun DayInkCard(
     padHeight: Dp = 210.dp,
     /** Yazı tanındıktan sonra kendiliğinden kaydetme süresi; 0 ise yalnızca ✓ ile kaydedilir. */
     autoSaveSeconds: Int = 2,
+    /** Kapalıyken yalnızca S Pen yazar, parmak sayfayı kaydırır. */
+    fingerDrawing: Boolean = true,
 ) {
     val recognizer = LocalContext.current.appContainer.handwriting
     val modelState by rememberInkModelState(recognizer)
@@ -159,10 +161,11 @@ fun DayInkCard(
             InkCanvas(
                 strokes = strokes,
                 onSize = { canvasSize = it },
-                placeholder = "Kalemle buraya yaz, ör. \"10'da dişçi\"",
+                placeholder = if (fingerDrawing) "Kalemle buraya yaz, ör. \"10'da dişçi\"" else "S Pen ile buraya yaz, ör. \"10'da dişçi\"",
                 lineSpacing = 50.dp,
                 lineColor = colors.tertiary.soft(0.18f),
                 onStrokeStart = { penDowns++ },
+                fingerDrawing = fingerDrawing,
                 modifier = Modifier.fillMaxWidth().height(padHeight).padding(end = 8.dp),
             )
 

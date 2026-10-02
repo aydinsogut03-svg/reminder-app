@@ -39,6 +39,8 @@ data class AppSettings(
     val shareSignature: Boolean = true,
     /** E-postayla paylaşırken alıcı olarak önceden yazılan adres (boşsa sorulur). */
     val shareEmail: String = "",
+    /** Takvimdeki yazı alanında parmakla yazma; kapalıyken parmak sayfayı kaydırır. */
+    val fingerDrawing: Boolean = false,
 ) {
     val defaultTime: LocalTime get() = LocalTime.of(defaultHour, 0)
 
@@ -68,6 +70,7 @@ class SettingsRepository(context: Context) {
                 inkAutoSaveSeconds = prefs[INK_AUTO_SAVE] ?: defaults.inkAutoSaveSeconds,
                 shareSignature = prefs[SHARE_SIGNATURE] ?: defaults.shareSignature,
                 shareEmail = prefs[SHARE_EMAIL] ?: defaults.shareEmail,
+                fingerDrawing = prefs[FINGER_DRAWING] ?: defaults.fingerDrawing,
             )
         }
 
@@ -93,6 +96,8 @@ class SettingsRepository(context: Context) {
 
     suspend fun setShareEmail(value: String) = dataStore.edit { it[SHARE_EMAIL] = value.trim() }
 
+    suspend fun setFingerDrawing(value: Boolean) = dataStore.edit { it[FINGER_DRAWING] = value }
+
     private companion object {
         val THEME = stringPreferencesKey("theme_mode")
         val SNOOZE = intPreferencesKey("snooze_minutes")
@@ -104,5 +109,6 @@ class SettingsRepository(context: Context) {
         val INK_AUTO_SAVE = intPreferencesKey("ink_auto_save_seconds")
         val SHARE_SIGNATURE = booleanPreferencesKey("share_signature")
         val SHARE_EMAIL = stringPreferencesKey("share_email")
+        val FINGER_DRAWING = booleanPreferencesKey("finger_drawing")
     }
 }
