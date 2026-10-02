@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Check
@@ -43,6 +44,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -83,6 +85,8 @@ import com.aydinsogut.reminder.appContainer
 import com.aydinsogut.reminder.data.RepeatRule
 import com.aydinsogut.reminder.ui.theme.ReminderPalette
 import com.aydinsogut.reminder.util.TimeFormats
+import com.aydinsogut.reminder.util.formatReminderTime
+import com.aydinsogut.reminder.util.toEpochMillis
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -103,7 +107,7 @@ fun EditReminderScreen(
     val context = LocalContext.current
     val container = context.appContainer
     val viewModel = viewModel(key = "edit-$id-$initialDate-${initialText.hashCode()}") {
-        EditReminderViewModel(container.repository, container.settings, id, initialDate, initialText)
+        EditReminderViewModel(container.repository, container.settings, container.understanding, id, initialDate, initialText)
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -229,6 +233,52 @@ fun EditReminderScreen(
                             colors = transparentFieldColors(),
                             modifier = Modifier.fillMaxWidth(),
                         )
+                    }
+                }
+            }
+
+            if (state.isThinking) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 4.dp)) {
+                    CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Anlaşılıyor…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            } else if (state.usedGemini) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 4.dp)) {
+                    Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Gemini Nano ile anlaşıldı", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                }
+            }
+
+            if (state.extraReminders.isNotEmpty()) {
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                ) {
+                    Column(Modifier.padding(start = 16.dp, top = 12.dp, bottom = 8.dp, end = 4.dp)) {
+                        Text(
+                            "Kaydedince bunlar da eklenecek",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        )
+                        state.extraReminders.forEachIndexed { index, extra ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(extra.title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    extra.dateTime?.let {
+                                        Text(
+                                            formatReminderTime(it.toEpochMillis()),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                                        )
+                                    }
+                                }
+                                IconButton(onClick = { viewModel.removeExtra(index) }) {
+                                    Icon(Icons.Rounded.Close, contentDescription = "Çıkar", tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                                }
+                            }
+                        }
                     }
                 }
             }

@@ -13,6 +13,17 @@
     </shortcut>
     <shortcut
         android:enabled="true"
+        android:icon="@drawable/ic_shortcut_pen"
+        android:shortcutId="ink"
+        android:shortcutLongLabel="@string/shortcut_ink_long"
+        android:shortcutShortLabel="@string/shortcut_ink_short">
+        <intent
+            android:action="com.aydinsogut.reminder.action.INK"
+            android:targetClass="com.aydinsogut.reminder.ui.MainActivity"
+            android:targetPackage="com.aydinsogut.reminder" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
         android:icon="@drawable/ic_shortcut_add"
         android:shortcutId="new"
         android:shortcutLongLabel="@string/shortcut_new_long"

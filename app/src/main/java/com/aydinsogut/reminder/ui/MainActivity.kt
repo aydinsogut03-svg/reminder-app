@@ -22,6 +22,7 @@ sealed interface LaunchRequest {
     /** Yeni hatırlatıcı; [text] paylaşılan metin, [voice] açılır açılmaz mikrofonu başlatır. */
     data class NewReminder(val text: String? = null, val voice: Boolean = false) : LaunchRequest
     data class OpenReminder(val id: Long) : LaunchRequest
+    data object Ink : LaunchRequest
 }
 
 class MainActivity : ComponentActivity() {
@@ -61,6 +62,7 @@ class MainActivity : ComponentActivity() {
     private fun parse(intent: Intent?): LaunchRequest? = when (intent?.action) {
         ReminderIntents.ACTION_ADD -> LaunchRequest.NewReminder()
         ReminderIntents.ACTION_VOICE -> LaunchRequest.NewReminder(voice = true)
+        ReminderIntents.ACTION_INK -> LaunchRequest.Ink
         ReminderIntents.ACTION_OPEN -> intent.getLongExtra(ReminderIntents.EXTRA_ID, -1L)
             .takeIf { it > 0 }
             ?.let { LaunchRequest.OpenReminder(it) }

@@ -29,6 +29,10 @@ data class AppSettings(
     val showCompleted: Boolean = true,
     /** Sesle hızlı eklemede zaman anlaşıldıysa düzenleme ekranını atlayıp direkt kaydet. */
     val voiceAutoSave: Boolean = true,
+    /** Zamanı gelen hatırlatmayı Türkçe sesli okur. */
+    val speakReminders: Boolean = true,
+    /** Uygunsa cümleleri Gemini Nano ile (cihaz içinde) anlar. */
+    val useGemini: Boolean = true,
 ) {
     val defaultTime: LocalTime get() = LocalTime.of(defaultHour, 0)
 
@@ -52,6 +56,8 @@ class SettingsRepository(context: Context) {
                 defaultHour = prefs[DEFAULT_HOUR] ?: defaults.defaultHour,
                 showCompleted = prefs[SHOW_COMPLETED] ?: defaults.showCompleted,
                 voiceAutoSave = prefs[VOICE_AUTO_SAVE] ?: defaults.voiceAutoSave,
+                speakReminders = prefs[SPEAK_REMINDERS] ?: defaults.speakReminders,
+                useGemini = prefs[USE_GEMINI] ?: defaults.useGemini,
             )
         }
 
@@ -67,11 +73,17 @@ class SettingsRepository(context: Context) {
 
     suspend fun setVoiceAutoSave(value: Boolean) = dataStore.edit { it[VOICE_AUTO_SAVE] = value }
 
+    suspend fun setSpeakReminders(value: Boolean) = dataStore.edit { it[SPEAK_REMINDERS] = value }
+
+    suspend fun setUseGemini(value: Boolean) = dataStore.edit { it[USE_GEMINI] = value }
+
     private companion object {
         val THEME = stringPreferencesKey("theme_mode")
         val SNOOZE = intPreferencesKey("snooze_minutes")
         val DEFAULT_HOUR = intPreferencesKey("default_hour")
         val SHOW_COMPLETED = booleanPreferencesKey("show_completed")
         val VOICE_AUTO_SAVE = booleanPreferencesKey("voice_auto_save")
+        val SPEAK_REMINDERS = booleanPreferencesKey("speak_reminders")
+        val USE_GEMINI = booleanPreferencesKey("use_gemini")
     }
 }

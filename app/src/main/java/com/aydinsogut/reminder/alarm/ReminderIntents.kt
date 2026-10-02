@@ -16,4 +16,7 @@ object ReminderIntents {
 
     /** Uygulamayı doğrudan sesle ekleme modunda açar (widget ve kısayoldan). */
     const val ACTION_VOICE = "com.aydinsogut.reminder.action.VOICE"
+
+    /** Uygulamayı kalemle yazma ekranında açar (kısayoldan). */
+    const val ACTION_INK = "com.aydinsogut.reminder.action.INK"
 }

@@ -10,10 +10,12 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.aydinsogut.reminder.ui.edit.EditReminderScreen
 import com.aydinsogut.reminder.ui.home.HomeScreen
+import com.aydinsogut.reminder.ui.ink.InkScreen
 import java.time.LocalDate
 
 private object Routes {
     const val HOME = "home"
+    const val INK = "ink"
     const val EDIT = "edit?id={id}&date={date}&text={text}&voice={voice}"
 
     fun edit(
@@ -39,6 +41,7 @@ fun ReminderNavHost(
         val route = when (launchRequest) {
             is LaunchRequest.NewReminder -> Routes.edit(text = launchRequest.text, voice = launchRequest.voice)
             is LaunchRequest.OpenReminder -> Routes.edit(id = launchRequest.id)
+            LaunchRequest.Ink -> Routes.INK
             null -> return@LaunchedEffect
         }
         navController.navigate(route) { launchSingleTop = true }
@@ -50,7 +53,18 @@ fun ReminderNavHost(
             HomeScreen(
                 onAdd = { date -> navController.navigate(Routes.edit(date = date)) },
                 onVoice = { navController.navigate(Routes.edit(voice = true)) },
+                onInk = { navController.navigate(Routes.INK) },
                 onOpen = { id -> navController.navigate(Routes.edit(id = id)) },
+            )
+        }
+        composable(Routes.INK) {
+            InkScreen(
+                onClose = { navController.popBackStack() },
+                onDone = { text ->
+                    navController.navigate(Routes.edit(text = text)) {
+                        popUpTo(Routes.INK) { inclusive = true }
+                    }
+                },
             )
         }
         composable(

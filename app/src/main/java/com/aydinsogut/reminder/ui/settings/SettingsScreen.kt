@@ -23,6 +23,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Alarm
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.RecordVoiceOver
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Mic
@@ -31,6 +34,7 @@ import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Snooze
 import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -57,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.aydinsogut.reminder.ai.NanoStatus
 import com.aydinsogut.reminder.alarm.NotificationHelper
 import com.aydinsogut.reminder.appContainer
 import com.aydinsogut.reminder.data.AppSettings
@@ -68,7 +73,8 @@ import com.aydinsogut.reminder.ui.theme.ReminderPalette
 fun SettingsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val container = context.appContainer
-    val viewModel = viewModel { SettingsViewModel(container.settings) }
+    val viewModel = viewModel { SettingsViewModel(container.settings, container.gemini, container.speaker) }
+    val nanoStatus by viewModel.nanoStatus.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
 
     var exactAlarmOk by remember { mutableStateOf(container.scheduler.canScheduleExact()) }
@@ -165,6 +171,50 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     subtitle = "Mikrofon düğmesi, widget veya kısayoldan söylediğinde zaman anlaşıldıysa düzenleme ekranını atla",
                 ) {
                     Switch(checked = settings.voiceAutoSave, onCheckedChange = viewModel::setVoiceAutoSave)
+                }
+            }
+        }
+
+        item {
+            SettingsGroup("Akıllı özellikler") {
+                SettingRow(
+                    icon = Icons.Rounded.AutoAwesome,
+                    tint = ReminderPalette.color(4),
+                    title = "Gemini Nano",
+                    subtitle = (nanoStatus?.label ?: "Kontrol ediliyor…") +
+                        ". Sesle, kalemle veya paylaşarak eklediğin cümleleri cihaz içinde anlar, bir cümleden birden fazla hatırlatıcı çıkarabilir.",
+                ) {
+                    Switch(
+                        checked = settings.useGemini,
+                        onCheckedChange = viewModel::setUseGemini,
+                        enabled = nanoStatus != NanoStatus.UNAVAILABLE,
+                    )
+                }
+                if (nanoStatus == NanoStatus.DOWNLOADABLE || nanoStatus == NanoStatus.DOWNLOADING) {
+                    Row(Modifier.padding(start = 68.dp, end = 16.dp, bottom = 12.dp)) {
+                        FilledTonalButton(
+                            onClick = viewModel::downloadGemini,
+                            enabled = nanoStatus == NanoStatus.DOWNLOADABLE,
+                        ) {
+                            Text(if (nanoStatus == NanoStatus.DOWNLOADING) "İndiriliyor…" else "Modeli indir")
+                        }
+                    }
+                }
+                Divider()
+                SettingRow(
+                    icon = Icons.Rounded.RecordVoiceOver,
+                    tint = ReminderPalette.color(1),
+                    title = "Hatırlatmayı sesli oku",
+                    subtitle = "Zamanı gelince başlığı ve notu Türkçe okur. Telefon sessizdeyken okumaz.",
+                ) {
+                    Switch(checked = settings.speakReminders, onCheckedChange = viewModel::setSpeakReminders)
+                }
+                Row(Modifier.padding(start = 68.dp, end = 16.dp, bottom = 12.dp)) {
+                    FilledTonalButton(onClick = viewModel::testSpeech) {
+                        Icon(Icons.AutoMirrored.Rounded.VolumeUp, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Dinle")
+                    }
                 }
             }
         }

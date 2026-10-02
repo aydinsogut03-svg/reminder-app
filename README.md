@@ -2,7 +2,7 @@
 
 Android hatırlatıcı uygulaması: bildirim gönderir, ana ekran widget'ı vardır ve takvimde günlere not düşmeyi sağlar.
 
-## Özellikler (v0.3)
+## Özellikler (v0.4)
 
 - Hatırlatıcı ekleme, düzenleme, silme (başlık, not, tarih, saat)
 - Zamanı gelince bildirim, bildirimden **Tamamlandı** ve **10 dk ertele**
@@ -11,6 +11,9 @@ Android hatırlatıcı uygulaması: bildirim gönderir, ana ekran widget'ı vard
 - Ana ekran widget'ı: yaklaşan hatırlatıcılar ve hızlı ekleme
 - Telefon yeniden başlayınca alarmlar korunur
 - Sesle ekleme: "yarın saat 9'da annemi ara" gibi Türkçe cümlelerden başlık ve zamanı internetsiz anlar (`util/TurkishReminderParser.kt`)
+- Kalemle yazma: S Pen ya da parmakla el yazısı, ML Kit Digital Ink ile cihaz içinde Türkçe metne çevrilir (`ui/ink`, `ai/HandwritingRecognizer.kt`)
+- Gemini Nano: destekleyen telefonlarda (ör. Galaxy S25) cümleleri cihaz içinde anlar, bir cümleden birden fazla hatırlatıcı çıkarır; olmazsa yerel ayrıştırıcıya düşer (`ai/`)
+- Sesli hatırlatma: zamanı gelince başlık ve not Türkçe okunur (telefon sessizdeyken okumaz)
 - Ayarlar: tema, erteleme süresi, varsayılan saat, tamamlananları gizleme, sesle direkt kaydetme
 - Telefon entegrasyonu: Paylaş menüsünden metni hatırlatıcı yapma, simgeye basılı tutunca "Sesle ekle" ve "Yeni" kısayolları, widget'ta mikrofon düğmesi
 - Tasarım: renkli kartlar, günlere göre gruplu liste, özet kartları, kaydırarak tamamla/sil (geri alınabilir), hızlı zaman seçimleri, her hatırlatıcıya renk, açık ve karanlık tema
@@ -34,8 +37,6 @@ Yerelde derlemek için: `./gradlew assembleDebug` (JDK 17 ve Android SDK gerekir
 
 ## Yol haritası
 
-- Kalemle (S Pen) not ve el yazısı tanıma
-- Gemini Nano ile cihaz içi akıllı özellikler
 - Kategoriler ve renkler, arama
 - Konuma veya özel günlere göre hatırlatma
 - Yedekleme ve geri yükleme

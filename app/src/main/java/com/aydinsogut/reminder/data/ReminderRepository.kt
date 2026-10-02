@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.glance.appwidget.updateAll
 import com.aydinsogut.reminder.alarm.AlarmScheduler
 import com.aydinsogut.reminder.alarm.NotificationHelper
+import com.aydinsogut.reminder.alarm.ReminderSpeaker
 import com.aydinsogut.reminder.util.startOfDayMillis
 import com.aydinsogut.reminder.widget.ReminderWidget
 import kotlinx.coroutines.flow.Flow
@@ -19,6 +20,7 @@ class ReminderRepository(
     private val scheduler: AlarmScheduler,
     private val notifications: NotificationHelper,
     private val settings: SettingsRepository,
+    private val speaker: ReminderSpeaker,
 ) {
     fun observeAll(): Flow<List<Reminder>> = dao.observeAll()
 
@@ -70,7 +72,9 @@ class ReminderRepository(
     suspend fun onAlarmFired(id: Long) {
         val reminder = dao.getById(id) ?: return
         if (reminder.isDone) return
-        notifications.show(reminder, settings.current().snoozeMinutes)
+        val prefs = settings.current()
+        notifications.show(reminder, prefs.snoozeMinutes)
+        if (prefs.speakReminders && speaker.canSpeakNow()) speaker.speak(reminder)
         val now = System.currentTimeMillis()
         if (reminder.repeat != RepeatRule.NONE && reminder.triggerAt <= now) {
             save(reminder.copy(triggerAt = reminder.nextTriggerAfter(now)))

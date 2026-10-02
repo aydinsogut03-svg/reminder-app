@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aydinsogut.reminder.data.Reminder
 import com.aydinsogut.reminder.data.ReminderRepository
-import com.aydinsogut.reminder.data.AppSettings
+import com.aydinsogut.reminder.ai.ReminderUnderstanding
 import com.aydinsogut.reminder.data.RepeatRule
 import com.aydinsogut.reminder.data.SettingsRepository
-import com.aydinsogut.reminder.util.TurkishReminderParser
+import com.aydinsogut.reminder.util.ParsedReminder
 import com.aydinsogut.reminder.util.formatReminderTime
 import com.aydinsogut.reminder.util.toEpochMillis
 import com.aydinsogut.reminder.util.toLocalDateTime
@@ -29,6 +29,11 @@ data class EditUiState(
     val repeat: RepeatRule = RepeatRule.NONE,
     val colorIndex: Int = 0,
     val createdAt: Long? = null,
+    /** Metin anlaşılırken (Gemini Nano çalışırken) true. */
+    val isThinking: Boolean = false,
+    val usedGemini: Boolean = false,
+    /** Aynı cümleden çıkan diğer hatırlatıcılar; kaydedince bunlar da eklenir. */
+    val extraReminders: List<ParsedReminder> = emptyList(),
 ) {
     val isNew: Boolean get() = id == 0L
     val triggerAt: Long get() = LocalDateTime.of(date, time).toEpochMillis()
@@ -39,6 +44,7 @@ data class EditUiState(
 class EditReminderViewModel(
     private val repository: ReminderRepository,
     private val settings: SettingsRepository,
+    private val understanding: ReminderUnderstanding,
     private val id: Long,
     initialDate: LocalDate?,
     initialText: String?,
@@ -57,7 +63,7 @@ class EditReminderViewModel(
             viewModelScope.launch {
                 val defaults = settings.current()
                 if (initialDate != null) _state.update { it.copy(time = defaults.defaultTime) }
-                if (!initialText.isNullOrBlank()) applyText(initialText, defaults)
+                if (!initialText.isNullOrBlank()) onSpokenText(initialText, quickSave = false) { }
             }
         }
         if (id != 0L) {
@@ -96,34 +102,50 @@ class EditReminderViewModel(
     }
 
     /**
-     * Sesle söylenen ya da paylaşılan metni başlık, not ve zamana çevirir.
-     * [quickSave] açıksa ve zaman anlaşıldıysa direkt kaydeder ve [onAutoSaved] çağrılır.
+     * Sesle söylenen, kalemle yazılan ya da paylaşılan metni anlayıp forma uygular.
+     * [quickSave] açıksa ve tüm zamanlar anlaşıldıysa direkt kaydeder ve [onAutoSaved] çağrılır.
      */
     fun onSpokenText(text: String, quickSave: Boolean, onAutoSaved: (String) -> Unit) {
         viewModelScope.launch {
+            _state.update { it.copy(isThinking = true) }
             val defaults = settings.current()
-            val understoodTime = applyText(text, defaults)
-            if (quickSave && defaults.voiceAutoSave && understoodTime && _state.value.canSave) {
+            val result = runCatching { understanding.understand(text) }.getOrNull()
+            val reminders = result?.reminders.orEmpty().ifEmpty { listOf(ParsedReminder(text.trim(), null)) }
+            applyParsed(text, reminders.first())
+            _state.update {
+                it.copy(
+                    isThinking = false,
+                    usedGemini = result?.usedGemini == true,
+                    extraReminders = reminders.drop(1).filter { r -> r.dateTime != null },
+                )
+            }
+            val allTimed = reminders.all { it.dateTime != null }
+            if (quickSave && defaults.voiceAutoSave && allTimed && _state.value.canSave) {
                 val saved = persist()
-                onAutoSaved("Kaydedildi: ${saved.title}, ${formatReminderTime(saved.triggerAt)}")
+                val count = 1 + _state.value.extraReminders.size
+                onAutoSaved(
+                    if (count > 1) "$count hatırlatıcı kaydedildi"
+                    else "Kaydedildi: ${saved.title}, ${formatReminderTime(saved.triggerAt)}",
+                )
             }
         }
     }
 
-    /** Metni forma uygular; zaman bulunduysa true döner. */
-    private fun applyText(text: String, defaults: AppSettings): Boolean {
-        val parsed = TurkishReminderParser.parse(text.trim(), defaultTime = defaults.defaultTime)
+    fun removeExtra(index: Int) = _state.update {
+        it.copy(extraReminders = it.extraReminders.filterIndexed { i, _ -> i != index })
+    }
+
+    private fun applyParsed(text: String, parsed: ParsedReminder) {
         val title = parsed.title.ifBlank { text.trim() }
-        val longText = title.length > 60 || text.contains('\n')
+        val longText = title.length > 60 || text.trim().contains('\n')
         _state.update { current ->
             current.copy(
-                title = if (longText) title.lineSequence().first().take(60).trim() else title,
+                title = if (longText) title.take(60).trim() else title,
                 note = if (longText) text.trim() else current.note,
                 date = parsed.dateTime?.toLocalDate() ?: current.date,
                 time = parsed.dateTime?.toLocalTime() ?: current.time,
             )
         }
-        return parsed.dateTime != null
     }
 
     fun save(onSaved: () -> Unit) {
@@ -147,6 +169,10 @@ class EditReminderViewModel(
             createdAt = s.createdAt ?: System.currentTimeMillis(),
         )
         val savedId = repository.save(reminder)
+        s.extraReminders.forEach { extra ->
+            val dateTime = extra.dateTime ?: return@forEach
+            repository.save(Reminder(title = extra.title, triggerAt = dateTime.toEpochMillis(), colorIndex = s.colorIndex))
+        }
         return reminder.copy(id = savedId)
     }
 

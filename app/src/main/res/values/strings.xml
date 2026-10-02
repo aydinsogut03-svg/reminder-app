@@ -6,4 +6,6 @@
     <string name="shortcut_new_long">Yeni hatırlatıcı</string>
     <string name="shortcut_voice_short">Sesle ekle</string>
     <string name="shortcut_voice_long">Sesle hatırlatıcı ekle</string>
+    <string name="shortcut_ink_short">Kalemle yaz</string>
+    <string name="shortcut_ink_long">Kalemle hatırlatıcı yaz</string>
 </resources>

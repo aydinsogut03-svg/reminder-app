@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Draw
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.NotificationsActive
@@ -39,6 +40,7 @@ import java.time.LocalDate
 fun HomeScreen(
     onAdd: (LocalDate?) -> Unit,
     onVoice: () -> Unit,
+    onInk: () -> Unit,
     onOpen: (Long) -> Unit,
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
@@ -82,6 +84,13 @@ fun HomeScreen(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
+                    SmallFloatingActionButton(
+                        onClick = onInk,
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    ) {
+                        Icon(Icons.Rounded.Draw, contentDescription = "Kalemle yaz")
+                    }
                     SmallFloatingActionButton(
                         onClick = onVoice,
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,

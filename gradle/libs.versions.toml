@@ -13,7 +13,7 @@ coroutines = "1.9.0"
 datastore = "1.1.1"
 junit = "4.13.2"
 mlkitGenaiPrompt = "1.0.0-beta4"
-mlkitDigitalInk = "19.0.0"
+mlkitDigitalInk = "18.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
