@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">Hatırlatıcı</string>
     <string name="widget_description">Yaklaşan hatırlatıcılarını ana ekranda gösterir</string>
+    <string name="share_label">Hatırlatıcı yap</string>
+    <string name="shortcut_new_short">Yeni</string>
+    <string name="shortcut_new_long">Yeni hatırlatıcı</string>
+    <string name="shortcut_voice_short">Sesle ekle</string>
+    <string name="shortcut_voice_long">Sesle hatırlatıcı ekle</string>
 </resources>

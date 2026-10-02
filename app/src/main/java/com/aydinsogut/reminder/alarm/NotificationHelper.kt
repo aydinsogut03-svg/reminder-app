@@ -30,7 +30,7 @@ class NotificationHelper(private val context: Context) {
     }
 
     @SuppressLint("MissingPermission")
-    fun show(reminder: Reminder) {
+    fun show(reminder: Reminder, snoozeMinutes: Int) {
         val manager = NotificationManagerCompat.from(context)
         if (!manager.areNotificationsEnabled()) return
 
@@ -59,7 +59,7 @@ class NotificationHelper(private val context: Context) {
             .addAction(0, "Tamamlandı", actionIntent(reminder.id, ReminderIntents.ACTION_DONE))
             .addAction(
                 0,
-                "${ReminderIntents.SNOOZE_MINUTES} dk ertele",
+                "$snoozeMinutes dk ertele",
                 actionIntent(reminder.id, ReminderIntents.ACTION_SNOOZE),
             )
             .build()

@@ -30,11 +30,13 @@ private val AppTypography = Base.copy(
     labelLarge = Base.labelLarge.copy(fontWeight = FontWeight.SemiBold),
 )
 
-/** Sistemin açık/karanlık ayarını izleyen uygulama teması. */
 @Composable
-fun ReminderTheme(content: @Composable () -> Unit) {
+fun ReminderTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit,
+) {
     MaterialTheme(
-        colorScheme = if (isSystemInDarkTheme()) DarkColors else LightColors,
+        colorScheme = if (darkTheme) DarkColors else LightColors,
         shapes = AppShapes,
         typography = AppTypography,
         content = content,

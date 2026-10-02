@@ -14,5 +14,6 @@ object ReminderIntents {
     /** Uygulamayı belirli bir hatırlatıcıyla açar (bildirim ve widget'tan). */
     const val ACTION_OPEN = "com.aydinsogut.reminder.action.OPEN"
 
-    const val SNOOZE_MINUTES = 10L
+    /** Uygulamayı doğrudan sesle ekleme modunda açar (widget ve kısayoldan). */
+    const val ACTION_VOICE = "com.aydinsogut.reminder.action.VOICE"
 }

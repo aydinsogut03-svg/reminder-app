@@ -22,7 +22,7 @@ class ReminderReceiver : BroadcastReceiver() {
                     ReminderIntents.ACTION_FIRE,
                     ReminderIntents.ACTION_SNOOZE_FIRE -> repository.onAlarmFired(id)
                     ReminderIntents.ACTION_DONE -> repository.completeFromNotification(id)
-                    ReminderIntents.ACTION_SNOOZE -> repository.snooze(id, ReminderIntents.SNOOZE_MINUTES)
+                    ReminderIntents.ACTION_SNOOZE -> repository.snooze(id)
                 }
             } finally {
                 pending.finish()

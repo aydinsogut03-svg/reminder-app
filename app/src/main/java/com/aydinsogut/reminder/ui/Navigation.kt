@@ -1,5 +1,6 @@
 package com.aydinsogut.reminder.ui
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavType
@@ -13,11 +14,17 @@ import java.time.LocalDate
 
 private object Routes {
     const val HOME = "home"
-    const val EDIT = "edit?id={id}&date={date}"
+    const val EDIT = "edit?id={id}&date={date}&text={text}&voice={voice}"
 
-    fun edit(id: Long = 0L, date: LocalDate? = null): String = buildString {
-        append("edit?id=$id")
+    fun edit(
+        id: Long = 0L,
+        date: LocalDate? = null,
+        text: String? = null,
+        voice: Boolean = false,
+    ): String = buildString {
+        append("edit?id=$id&voice=$voice")
         if (date != null) append("&date=$date")
+        if (text != null) append("&text=${Uri.encode(text)}")
     }
 }
 
@@ -30,7 +37,7 @@ fun ReminderNavHost(
 
     LaunchedEffect(launchRequest) {
         val route = when (launchRequest) {
-            LaunchRequest.NewReminder -> Routes.edit()
+            is LaunchRequest.NewReminder -> Routes.edit(text = launchRequest.text, voice = launchRequest.voice)
             is LaunchRequest.OpenReminder -> Routes.edit(id = launchRequest.id)
             null -> return@LaunchedEffect
         }
@@ -42,6 +49,7 @@ fun ReminderNavHost(
         composable(Routes.HOME) {
             HomeScreen(
                 onAdd = { date -> navController.navigate(Routes.edit(date = date)) },
+                onVoice = { navController.navigate(Routes.edit(voice = true)) },
                 onOpen = { id -> navController.navigate(Routes.edit(id = id)) },
             )
         }
@@ -57,13 +65,23 @@ fun ReminderNavHost(
                     nullable = true
                     defaultValue = null
                 },
+                navArgument("text") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("voice") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
             ),
         ) { entry ->
-            val id = entry.arguments?.getLong("id") ?: 0L
-            val date = entry.arguments?.getString("date")?.let(LocalDate::parse)
+            val args = entry.arguments
             EditReminderScreen(
-                id = id,
-                initialDate = date,
+                id = args?.getLong("id") ?: 0L,
+                initialDate = args?.getString("date")?.let(LocalDate::parse),
+                initialText = args?.getString("text"),
+                startWithVoice = args?.getBoolean("voice") ?: false,
                 onBack = { navController.popBackStack() },
             )
         }

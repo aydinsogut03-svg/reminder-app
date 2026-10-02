@@ -4,7 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aydinsogut.reminder.data.Reminder
 import com.aydinsogut.reminder.data.ReminderRepository
+import com.aydinsogut.reminder.data.AppSettings
 import com.aydinsogut.reminder.data.RepeatRule
+import com.aydinsogut.reminder.data.SettingsRepository
+import com.aydinsogut.reminder.util.TurkishReminderParser
+import com.aydinsogut.reminder.util.formatReminderTime
 import com.aydinsogut.reminder.util.toEpochMillis
 import com.aydinsogut.reminder.util.toLocalDateTime
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,8 +38,10 @@ data class EditUiState(
 
 class EditReminderViewModel(
     private val repository: ReminderRepository,
+    private val settings: SettingsRepository,
     private val id: Long,
     initialDate: LocalDate?,
+    initialText: String?,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -47,6 +53,13 @@ class EditReminderViewModel(
     val state: StateFlow<EditUiState> = _state.asStateFlow()
 
     init {
+        if (id == 0L) {
+            viewModelScope.launch {
+                val defaults = settings.current()
+                if (initialDate != null) _state.update { it.copy(time = defaults.defaultTime) }
+                if (!initialText.isNullOrBlank()) applyText(initialText, defaults)
+            }
+        }
         if (id != 0L) {
             viewModelScope.launch {
                 repository.get(id)?.let { reminder ->
@@ -82,24 +95,59 @@ class EditReminderViewModel(
         it.copy(date = value.toLocalDate(), time = value.toLocalTime().withSecond(0).withNano(0))
     }
 
-    fun save(onSaved: () -> Unit) {
-        val s = _state.value
-        if (!s.canSave) return
+    /**
+     * Sesle söylenen ya da paylaşılan metni başlık, not ve zamana çevirir.
+     * [quickSave] açıksa ve zaman anlaşıldıysa direkt kaydeder ve [onAutoSaved] çağrılır.
+     */
+    fun onSpokenText(text: String, quickSave: Boolean, onAutoSaved: (String) -> Unit) {
         viewModelScope.launch {
-            repository.save(
-                Reminder(
-                    id = s.id,
-                    title = s.title.trim(),
-                    note = s.note.trim(),
-                    triggerAt = s.triggerAt,
-                    repeat = s.repeat,
-                    colorIndex = s.colorIndex,
-                    isDone = false,
-                    createdAt = s.createdAt ?: System.currentTimeMillis(),
-                ),
+            val defaults = settings.current()
+            val understoodTime = applyText(text, defaults)
+            if (quickSave && defaults.voiceAutoSave && understoodTime && _state.value.canSave) {
+                val saved = persist()
+                onAutoSaved("Kaydedildi: ${saved.title}, ${formatReminderTime(saved.triggerAt)}")
+            }
+        }
+    }
+
+    /** Metni forma uygular; zaman bulunduysa true döner. */
+    private fun applyText(text: String, defaults: AppSettings): Boolean {
+        val parsed = TurkishReminderParser.parse(text.trim(), defaultTime = defaults.defaultTime)
+        val title = parsed.title.ifBlank { text.trim() }
+        val longText = title.length > 60 || text.contains('\n')
+        _state.update { current ->
+            current.copy(
+                title = if (longText) title.lineSequence().first().take(60).trim() else title,
+                note = if (longText) text.trim() else current.note,
+                date = parsed.dateTime?.toLocalDate() ?: current.date,
+                time = parsed.dateTime?.toLocalTime() ?: current.time,
             )
+        }
+        return parsed.dateTime != null
+    }
+
+    fun save(onSaved: () -> Unit) {
+        if (!_state.value.canSave) return
+        viewModelScope.launch {
+            persist()
             onSaved()
         }
+    }
+
+    private suspend fun persist(): Reminder {
+        val s = _state.value
+        val reminder = Reminder(
+            id = s.id,
+            title = s.title.trim(),
+            note = s.note.trim(),
+            triggerAt = s.triggerAt,
+            repeat = s.repeat,
+            colorIndex = s.colorIndex,
+            isDone = false,
+            createdAt = s.createdAt ?: System.currentTimeMillis(),
+        )
+        val savedId = repository.save(reminder)
+        return reminder.copy(id = savedId)
     }
 
     fun delete(onDeleted: () -> Unit) {

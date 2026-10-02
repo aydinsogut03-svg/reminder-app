@@ -6,6 +6,7 @@ import com.aydinsogut.reminder.alarm.AlarmScheduler
 import com.aydinsogut.reminder.alarm.NotificationHelper
 import com.aydinsogut.reminder.data.AppDatabase
 import com.aydinsogut.reminder.data.ReminderRepository
+import com.aydinsogut.reminder.data.SettingsRepository
 
 /** Basit bağımlılık kabı. Uygulama büyüdüğünde Hilt'e geçiş için tek nokta burasıdır. */
 class AppContainer(context: Context) {
@@ -21,7 +22,9 @@ class AppContainer(context: Context) {
 
     val notifications: NotificationHelper by lazy { NotificationHelper(appContext) }
 
+    val settings: SettingsRepository by lazy { SettingsRepository(appContext) }
+
     val repository: ReminderRepository by lazy {
-        ReminderRepository(appContext, database.reminderDao(), scheduler, notifications)
+        ReminderRepository(appContext, database.reminderDao(), scheduler, notifications, settings)
     }
 }

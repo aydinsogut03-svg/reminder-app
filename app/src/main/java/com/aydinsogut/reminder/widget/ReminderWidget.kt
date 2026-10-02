@@ -9,6 +9,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.Image
+import androidx.glance.ImageProvider
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
@@ -35,6 +37,7 @@ import androidx.glance.layout.padding
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import com.aydinsogut.reminder.R
 import com.aydinsogut.reminder.alarm.ReminderIntents
 import com.aydinsogut.reminder.appContainer
 import com.aydinsogut.reminder.data.Reminder
@@ -70,6 +73,9 @@ private fun WidgetContent(context: Context, reminders: List<Reminder>) {
     val addNew = Intent(context, MainActivity::class.java)
         .setAction(ReminderIntents.ACTION_ADD)
         .setData(Uri.parse("reminder://add"))
+    val voice = Intent(context, MainActivity::class.java)
+        .setAction(ReminderIntents.ACTION_VOICE)
+        .setData(Uri.parse("reminder://voice"))
 
     Column(
         modifier = GlanceModifier
@@ -94,6 +100,21 @@ private fun WidgetContent(context: Context, reminders: List<Reminder>) {
                     maxLines = 1,
                 )
             }
+            Box(
+                modifier = GlanceModifier
+                    .size(36.dp)
+                    .background(DayNightColor(day = Color(0xFFCCFBF1), night = Color(0xFF5EEAD4)))
+                    .cornerRadius(18.dp)
+                    .clickable(actionStartActivity(voice)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    provider = ImageProvider(R.drawable.ic_widget_mic),
+                    contentDescription = "Sesle ekle",
+                    modifier = GlanceModifier.size(20.dp),
+                )
+            }
+            Spacer(GlanceModifier.width(8.dp))
             Box(
                 modifier = GlanceModifier
                     .size(36.dp)

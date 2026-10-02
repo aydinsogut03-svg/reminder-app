@@ -13,8 +13,8 @@ android {
         applicationId = "com.aydinsogut.reminder"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.3.0"
     }
 
     // Sabit debug anahtarı: her CI derlemesi aynı imzayı taşır, yeni APK eskisinin üzerine kurulur.
@@ -64,5 +64,7 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.datastore.preferences)
+    testImplementation(libs.junit)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

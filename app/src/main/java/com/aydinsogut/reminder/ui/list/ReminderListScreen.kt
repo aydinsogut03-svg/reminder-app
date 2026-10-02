@@ -57,8 +57,8 @@ fun ReminderListScreen(
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
-    val repository = LocalContext.current.appContainer.repository
-    val viewModel = viewModel { ReminderListViewModel(repository) }
+    val container = LocalContext.current.appContainer
+    val viewModel = viewModel { ReminderListViewModel(container.repository, container.settings) }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
 

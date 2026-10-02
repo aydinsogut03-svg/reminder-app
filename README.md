@@ -2,7 +2,7 @@
 
 Android hatırlatıcı uygulaması: bildirim gönderir, ana ekran widget'ı vardır ve takvimde günlere not düşmeyi sağlar.
 
-## Özellikler (v0.2)
+## Özellikler (v0.3)
 
 - Hatırlatıcı ekleme, düzenleme, silme (başlık, not, tarih, saat)
 - Zamanı gelince bildirim, bildirimden **Tamamlandı** ve **10 dk ertele**
@@ -10,7 +10,10 @@ Android hatırlatıcı uygulaması: bildirim gönderir, ana ekran widget'ı vard
 - Aylık takvim: notu olan günler işaretli, bir güne dokununca o günün notları ve "Not ekle"
 - Ana ekran widget'ı: yaklaşan hatırlatıcılar ve hızlı ekleme
 - Telefon yeniden başlayınca alarmlar korunur
-- Yeni tasarım: renkli kartlar, günlere göre gruplu liste, özet kartları, kaydırarak tamamla/sil (geri alınabilir), hızlı zaman seçimleri, her hatırlatıcıya renk, açık ve karanlık tema
+- Sesle ekleme: "yarın saat 9'da annemi ara" gibi Türkçe cümlelerden başlık ve zamanı internetsiz anlar (`util/TurkishReminderParser.kt`)
+- Ayarlar: tema, erteleme süresi, varsayılan saat, tamamlananları gizleme, sesle direkt kaydetme
+- Telefon entegrasyonu: Paylaş menüsünden metni hatırlatıcı yapma, simgeye basılı tutunca "Sesle ekle" ve "Yeni" kısayolları, widget'ta mikrofon düğmesi
+- Tasarım: renkli kartlar, günlere göre gruplu liste, özet kartları, kaydırarak tamamla/sil (geri alınabilir), hızlı zaman seçimleri, her hatırlatıcıya renk, açık ve karanlık tema
 
 ## APK'yı indirme
 
@@ -31,6 +34,8 @@ Yerelde derlemek için: `./gradlew assembleDebug` (JDK 17 ve Android SDK gerekir
 
 ## Yol haritası
 
+- Kalemle (S Pen) not ve el yazısı tanıma
+- Gemini Nano ile cihaz içi akıllı özellikler
 - Kategoriler ve renkler, arama
 - Konuma veya özel günlere göre hatırlatma
 - Yedekleme ve geri yükleme

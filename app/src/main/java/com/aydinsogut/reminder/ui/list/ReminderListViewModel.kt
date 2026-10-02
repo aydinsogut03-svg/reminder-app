@@ -5,10 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.aydinsogut.reminder.data.Reminder
 import com.aydinsogut.reminder.data.ReminderRepository
 import com.aydinsogut.reminder.data.RepeatRule
+import com.aydinsogut.reminder.data.SettingsRepository
 import com.aydinsogut.reminder.util.toLocalDate
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -30,9 +31,13 @@ data class ListUiState(
     val isEmpty: Boolean get() = sections.isEmpty()
 }
 
-class ReminderListViewModel(private val repository: ReminderRepository) : ViewModel() {
-    val state: StateFlow<ListUiState> = repository.observeAll()
-        .map { buildState(it, System.currentTimeMillis(), LocalDate.now()) }
+class ReminderListViewModel(
+    private val repository: ReminderRepository,
+    settings: SettingsRepository,
+) : ViewModel() {
+    val state: StateFlow<ListUiState> = combine(repository.observeAll(), settings.settings) { all, prefs ->
+        buildState(all, System.currentTimeMillis(), LocalDate.now(), prefs.showCompleted)
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ListUiState())
 
     fun toggleDone(reminder: Reminder) {
@@ -48,7 +53,7 @@ class ReminderListViewModel(private val repository: ReminderRepository) : ViewMo
     }
 }
 
-private fun buildState(all: List<Reminder>, now: Long, today: LocalDate): ListUiState {
+private fun buildState(all: List<Reminder>, now: Long, today: LocalDate, showCompleted: Boolean): ListUiState {
     val missed = mutableListOf<Reminder>()
     val todayItems = mutableListOf<Reminder>()
     val tomorrow = mutableListOf<Reminder>()
@@ -74,7 +79,7 @@ private fun buildState(all: List<Reminder>, now: Long, today: LocalDate): ListUi
         if (tomorrow.isNotEmpty()) add(ReminderSection("tomorrow", "Yarın", tomorrow))
         if (thisWeek.isNotEmpty()) add(ReminderSection("week", "Bu hafta", thisWeek))
         if (later.isNotEmpty()) add(ReminderSection("later", "Daha sonra", later))
-        if (done.isNotEmpty()) add(ReminderSection("done", "Tamamlanan", done.sortedByDescending { it.triggerAt }))
+        if (showCompleted && done.isNotEmpty()) add(ReminderSection("done", "Tamamlanan", done.sortedByDescending { it.triggerAt }))
     }
 
     return ListUiState(

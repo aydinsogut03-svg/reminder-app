@@ -18,6 +18,7 @@ class ReminderRepository(
     private val dao: ReminderDao,
     private val scheduler: AlarmScheduler,
     private val notifications: NotificationHelper,
+    private val settings: SettingsRepository,
 ) {
     fun observeAll(): Flow<List<Reminder>> = dao.observeAll()
 
@@ -69,7 +70,7 @@ class ReminderRepository(
     suspend fun onAlarmFired(id: Long) {
         val reminder = dao.getById(id) ?: return
         if (reminder.isDone) return
-        notifications.show(reminder)
+        notifications.show(reminder, settings.current().snoozeMinutes)
         val now = System.currentTimeMillis()
         if (reminder.repeat != RepeatRule.NONE && reminder.triggerAt <= now) {
             save(reminder.copy(triggerAt = reminder.nextTriggerAfter(now)))
@@ -88,7 +89,8 @@ class ReminderRepository(
         }
     }
 
-    suspend fun snooze(id: Long, minutes: Long) {
+    suspend fun snooze(id: Long) {
+        val minutes = settings.current().snoozeMinutes
         notifications.cancel(id)
         scheduler.scheduleSnooze(id, System.currentTimeMillis() + minutes * 60_000L)
     }

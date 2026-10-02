@@ -1,5 +1,11 @@
 package com.aydinsogut.reminder.ui.edit
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.speech.RecognizerIntent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,6 +34,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.HourglassTop
+import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material.icons.rounded.Weekend
@@ -56,9 +63,11 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,12 +97,45 @@ fun EditReminderScreen(
     id: Long,
     initialDate: LocalDate?,
     onBack: () -> Unit,
+    initialText: String? = null,
+    startWithVoice: Boolean = false,
 ) {
-    val repository = LocalContext.current.appContainer.repository
-    val viewModel = viewModel(key = "edit-$id-$initialDate") {
-        EditReminderViewModel(repository, id, initialDate)
+    val context = LocalContext.current
+    val container = context.appContainer
+    val viewModel = viewModel(key = "edit-$id-$initialDate-${initialText.hashCode()}") {
+        EditReminderViewModel(container.repository, container.settings, id, initialDate, initialText)
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    val voiceLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val spoken = result.data
+            ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            ?.firstOrNull()
+        if (spoken != null) {
+            viewModel.onSpokenText(spoken, quickSave = startWithVoice) { message ->
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                onBack()
+            }
+        }
+    }
+    val startVoice = {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+            .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            .putExtra(RecognizerIntent.EXTRA_LANGUAGE, "tr-TR")
+            .putExtra(RecognizerIntent.EXTRA_PROMPT, "Ne hatırlatayım? Örneğin: yarın saat 9'da annemi ara")
+        try {
+            voiceLauncher.launch(intent)
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(context, "Bu telefonda ses tanıma bulunamadı", Toast.LENGTH_LONG).show()
+        }
+    }
+    var voiceStarted by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (startWithVoice && !voiceStarted) {
+            voiceStarted = true
+            startVoice()
+        }
+    }
     val accent = ReminderPalette.color(state.colorIndex)
 
     var showDatePicker by remember { mutableStateOf(false) }
@@ -170,6 +212,11 @@ fun EditReminderScreen(
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                             colors = transparentFieldColors(),
+                            trailingIcon = {
+                                IconButton(onClick = startVoice) {
+                                    Icon(Icons.Rounded.Mic, contentDescription = "Sesle söyle", tint = accent)
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                         )
                         TextField(
