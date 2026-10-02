@@ -62,9 +62,6 @@ import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.LocalTime
 
-/** Kalemle yazdıktan sonra kendiliğinden kaydetmeden önce beklenen süre. */
-private const val AUTO_SAVE_MS = 1_800
-
 /**
  * Takvimde hep açık duran yazı alanı: kalemle yaz, yazı tanınır ve kısa bir bekleyişten
  * sonra seçili güne kendiliğinden kaydedilir (onay düğmesiyle hemen de kaydedilebilir).
@@ -76,6 +73,8 @@ fun DayInkCard(
     onSubmit: (String) -> Unit,
     modifier: Modifier = Modifier,
     padHeight: Dp = 210.dp,
+    /** Yazı tanındıktan sonra kendiliğinden kaydetme süresi; 0 ise yalnızca ✓ ile kaydedilir. */
+    autoSaveSeconds: Int = 2,
 ) {
     val recognizer = LocalContext.current.appContainer.handwriting
     val modelState by rememberInkModelState(recognizer)
@@ -94,7 +93,7 @@ fun DayInkCard(
         onSubmit(value)
     }
 
-    LaunchedEffect(strokes.size, penDowns, modelState) {
+    LaunchedEffect(strokes.size, penDowns, modelState, autoSaveSeconds) {
         countdown.snapTo(0f)
         if (strokes.isEmpty()) {
             text = ""
@@ -106,7 +105,8 @@ fun DayInkCard(
         text = recognizer.recognize(strokes.toList(), canvasSize.width.toFloat(), canvasSize.height.toFloat())
         recognizing = false
         if (text.isBlank()) return@LaunchedEffect
-        countdown.animateTo(1f, tween(AUTO_SAVE_MS, easing = LinearEasing))
+        if (autoSaveSeconds <= 0) return@LaunchedEffect
+        countdown.animateTo(1f, tween(autoSaveSeconds * 1000, easing = LinearEasing))
         submit()
     }
 
@@ -136,7 +136,11 @@ fun DayInkCard(
                         text = when (modelState) {
                             InkModelState.DOWNLOADING -> "El yazısı modeli indiriliyor (bir kerelik)…"
                             InkModelState.FAILED -> "Model indirilemedi, internet bağlantını kontrol et"
-                            else -> "${date.format(TimeFormats.dayTitle)} · yazınca kendiliğinden eklenir"
+                            else -> if (autoSaveSeconds > 0) {
+                                "${date.format(TimeFormats.dayTitle)} · yazınca kendiliğinden eklenir"
+                            } else {
+                                "${date.format(TimeFormats.dayTitle)} · yaz ve ✓ ile ekle"
+                            }
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant,

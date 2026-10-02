@@ -56,6 +56,10 @@ class CalendarViewModel(private val repository: ReminderRepository) : ViewModel(
     /** Kalemle yazılan metni seçili güne hatırlatıcı olarak kaydeder; kaydedileni döndürür (geri almak için). */
     suspend fun addFromInk(text: String, date: LocalDate): Reminder? = repository.addFromText(text, date)
 
+    fun restore(reminder: Reminder) {
+        viewModelScope.launch { repository.restore(reminder) }
+    }
+
     fun undoAdd(reminder: Reminder) {
         viewModelScope.launch { repository.delete(reminder) }
     }

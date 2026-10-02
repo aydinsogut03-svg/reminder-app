@@ -33,11 +33,18 @@ data class AppSettings(
     val speakReminders: Boolean = true,
     /** Uygunsa cümleleri Gemini Nano ile (cihaz içinde) anlar. */
     val useGemini: Boolean = true,
+    /** Kalemle yazdıktan sonra kendiliğinden kaydetmeden önce beklenen saniye; 0 = kapalı (✓ ile kaydet). */
+    val inkAutoSaveSeconds: Int = 2,
+    /** Paylaşılan metnin sonuna "Hatırlatıcı ile paylaşıldı" eklenir. */
+    val shareSignature: Boolean = true,
+    /** E-postayla paylaşırken alıcı olarak önceden yazılan adres (boşsa sorulur). */
+    val shareEmail: String = "",
 ) {
     val defaultTime: LocalTime get() = LocalTime.of(defaultHour, 0)
 
     companion object {
         val SnoozeOptions = listOf(5, 10, 15, 30, 60)
+        val InkAutoSaveOptions = listOf(0, 1, 2, 3, 5)
     }
 }
 
@@ -58,6 +65,9 @@ class SettingsRepository(context: Context) {
                 voiceAutoSave = prefs[VOICE_AUTO_SAVE] ?: defaults.voiceAutoSave,
                 speakReminders = prefs[SPEAK_REMINDERS] ?: defaults.speakReminders,
                 useGemini = prefs[USE_GEMINI] ?: defaults.useGemini,
+                inkAutoSaveSeconds = prefs[INK_AUTO_SAVE] ?: defaults.inkAutoSaveSeconds,
+                shareSignature = prefs[SHARE_SIGNATURE] ?: defaults.shareSignature,
+                shareEmail = prefs[SHARE_EMAIL] ?: defaults.shareEmail,
             )
         }
 
@@ -77,6 +87,12 @@ class SettingsRepository(context: Context) {
 
     suspend fun setUseGemini(value: Boolean) = dataStore.edit { it[USE_GEMINI] = value }
 
+    suspend fun setInkAutoSaveSeconds(value: Int) = dataStore.edit { it[INK_AUTO_SAVE] = value.coerceIn(0, 10) }
+
+    suspend fun setShareSignature(value: Boolean) = dataStore.edit { it[SHARE_SIGNATURE] = value }
+
+    suspend fun setShareEmail(value: String) = dataStore.edit { it[SHARE_EMAIL] = value.trim() }
+
     private companion object {
         val THEME = stringPreferencesKey("theme_mode")
         val SNOOZE = intPreferencesKey("snooze_minutes")
@@ -85,5 +101,8 @@ class SettingsRepository(context: Context) {
         val VOICE_AUTO_SAVE = booleanPreferencesKey("voice_auto_save")
         val SPEAK_REMINDERS = booleanPreferencesKey("speak_reminders")
         val USE_GEMINI = booleanPreferencesKey("use_gemini")
+        val INK_AUTO_SAVE = intPreferencesKey("ink_auto_save_seconds")
+        val SHARE_SIGNATURE = booleanPreferencesKey("share_signature")
+        val SHARE_EMAIL = stringPreferencesKey("share_email")
     }
 }

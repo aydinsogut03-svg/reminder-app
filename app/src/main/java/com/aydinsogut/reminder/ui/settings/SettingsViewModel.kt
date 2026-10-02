@@ -6,6 +6,8 @@ import com.aydinsogut.reminder.ai.GeminiNano
 import com.aydinsogut.reminder.ai.NanoStatus
 import com.aydinsogut.reminder.alarm.ReminderSpeaker
 import com.aydinsogut.reminder.data.AppSettings
+import com.aydinsogut.reminder.data.Reminder
+import com.aydinsogut.reminder.data.ReminderRepository
 import com.aydinsogut.reminder.data.SettingsRepository
 import com.aydinsogut.reminder.data.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +19,7 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val repository: SettingsRepository,
+    private val reminders: ReminderRepository,
     private val gemini: GeminiNano,
     private val speaker: ReminderSpeaker,
 ) : ViewModel() {
@@ -54,6 +57,20 @@ class SettingsViewModel(
     fun setShowCompleted(value: Boolean) = launch { repository.setShowCompleted(value) }
 
     fun setVoiceAutoSave(value: Boolean) = launch { repository.setVoiceAutoSave(value) }
+
+    fun setInkAutoSaveSeconds(value: Int) = launch { repository.setInkAutoSaveSeconds(value) }
+
+    fun setShareSignature(value: Boolean) = launch { repository.setShareSignature(value) }
+
+    fun setShareEmail(value: String) = launch { repository.setShareEmail(value) }
+
+    fun exportAll(onReady: (List<Reminder>) -> Unit) {
+        viewModelScope.launch { onReady(reminders.all()) }
+    }
+
+    fun clearCompleted(onDone: (Int) -> Unit) {
+        viewModelScope.launch { onDone(reminders.deleteCompleted()) }
+    }
 
     private fun launch(block: suspend () -> Unit) {
         viewModelScope.launch { block() }

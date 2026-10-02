@@ -81,6 +81,7 @@ class QuickInkActivity : ComponentActivity() {
                     date = date,
                     onDateChange = { date = it },
                     defaultTime = settings.defaultTime,
+                    autoSaveSeconds = settings.inkAutoSaveSeconds,
                     onSubmit = { text -> save(text, date) },
                     onDismiss = ::finish,
                 )
@@ -118,6 +119,7 @@ private fun QuickInkSheet(
     date: LocalDate,
     onDateChange: (LocalDate) -> Unit,
     defaultTime: java.time.LocalTime,
+    autoSaveSeconds: Int,
     onSubmit: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -152,6 +154,7 @@ private fun QuickInkSheet(
                 DayInkCard(
                     date = date,
                     defaultTime = defaultTime,
+                    autoSaveSeconds = autoSaveSeconds,
                     onSubmit = onSubmit,
                     padHeight = 230.dp,
                     modifier = Modifier.padding(horizontal = 12.dp),

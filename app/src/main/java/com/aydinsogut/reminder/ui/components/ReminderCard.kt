@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -64,8 +65,9 @@ fun SwipeableReminderCard(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
     showDate: Boolean = true,
+    onLongClick: (() -> Unit)? = null,
 ) {
-    val state = rememberSwipeToDismissBoxState()
+    val state = rememberSwipeToDismissBoxState(positionalThreshold = { it * 0.35f })
 
     LaunchedEffect(state.currentValue) {
         when (state.currentValue) {
@@ -112,7 +114,7 @@ fun SwipeableReminderCard(
             }
         },
     ) {
-        ReminderCard(reminder, onClick, onToggleDone, showDate = showDate)
+        ReminderCard(reminder, onClick, onToggleDone, showDate = showDate, onLongClick = onLongClick)
     }
 }
 
@@ -123,6 +125,7 @@ fun ReminderCard(
     onToggleDone: () -> Unit,
     modifier: Modifier = Modifier,
     showDate: Boolean = true,
+    onLongClick: (() -> Unit)? = null,
 ) {
     val accent = ReminderPalette.color(reminder.colorIndex)
     val overdue = !reminder.isDone &&
@@ -142,10 +145,12 @@ fun ReminderCard(
     }
 
     Surface(
-        onClick = onClick,
         shape = CardShape,
         color = container,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(CardShape)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
         Row(
             modifier = Modifier

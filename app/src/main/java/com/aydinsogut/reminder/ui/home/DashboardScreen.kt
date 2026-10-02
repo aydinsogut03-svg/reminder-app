@@ -39,6 +39,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -56,6 +58,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aydinsogut.reminder.appContainer
 import com.aydinsogut.reminder.data.Reminder
+import com.aydinsogut.reminder.ui.components.ReminderActionsSheet
 import com.aydinsogut.reminder.ui.components.SwipeableReminderCard
 import com.aydinsogut.reminder.ui.theme.ReminderPalette
 import com.aydinsogut.reminder.ui.theme.soft
@@ -85,6 +88,7 @@ fun DashboardScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableIntStateOf(TAB_UPCOMING) }
     val scope = rememberCoroutineScope()
+    var menuFor by remember { mutableStateOf<Reminder?>(null) }
 
     fun deleteWithUndo(reminder: Reminder) {
         viewModel.delete(reminder)
@@ -143,6 +147,9 @@ fun DashboardScreen(
                 )
             }
         }
+        if (sections.isNotEmpty()) {
+            item(key = "hint") { GestureHint() }
+        }
         sections.forEach { section ->
             item(key = "section-$tab-${section.key}") { SectionHeader(section) }
             items(section.items, key = { "$tab-${it.id}" }) { reminder ->
@@ -151,11 +158,31 @@ fun DashboardScreen(
                     onClick = { onOpen(reminder.id) },
                     onToggleDone = { viewModel.toggleDone(reminder) },
                     onDelete = { deleteWithUndo(reminder) },
+                    onLongClick = { menuFor = reminder },
                     modifier = Modifier.animateItem(),
                 )
             }
         }
     }
+
+    menuFor?.let { reminder ->
+        ReminderActionsSheet(
+            reminder = reminder,
+            onDismiss = { menuFor = null },
+            onEdit = { onOpen(reminder.id) },
+            onDelete = { deleteWithUndo(reminder) },
+        )
+    }
+}
+
+@Composable
+private fun GestureHint() {
+    Text(
+        "Sola kaydır: sil · Sağa kaydır: tamamla · Basılı tut: paylaş",
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+        modifier = Modifier.padding(start = 4.dp, top = 4.dp),
+    )
 }
 
 @Composable

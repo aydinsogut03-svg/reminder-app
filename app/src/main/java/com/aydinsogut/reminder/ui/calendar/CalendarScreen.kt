@@ -46,6 +46,11 @@ import androidx.compose.ui.graphics.lerp
 import com.aydinsogut.reminder.data.AppSettings
 import com.aydinsogut.reminder.util.toLocalDateTime
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.aydinsogut.reminder.data.Reminder
+import com.aydinsogut.reminder.ui.components.ReminderActionsSheet
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -88,6 +93,20 @@ fun CalendarScreen(
     val settings by container.settings.settings.collectAsStateWithLifecycle(initialValue = AppSettings())
     val isToday = state.selected == LocalDate.now()
     val scope = rememberCoroutineScope()
+    var menuFor by remember { mutableStateOf<Reminder?>(null) }
+
+    fun deleteWithUndo(reminder: Reminder) {
+        viewModel.delete(reminder)
+        scope.launch {
+            snackbarHostState.currentSnackbarData?.dismiss()
+            val result = snackbarHostState.showSnackbar(
+                message = "\"${reminder.title}\" silindi",
+                actionLabel = "Geri al",
+                duration = SnackbarDuration.Short,
+            )
+            if (result == SnackbarResult.ActionPerformed) viewModel.restore(reminder)
+        }
+    }
 
     fun saveInk(text: String) {
         val date = state.selected
@@ -141,6 +160,7 @@ fun CalendarScreen(
             DayInkCard(
                 date = state.selected,
                 defaultTime = settings.defaultTime,
+                autoSaveSeconds = settings.inkAutoSaveSeconds,
                 onSubmit = ::saveInk,
             )
         }
@@ -179,17 +199,35 @@ fun CalendarScreen(
                 )
             }
         } else {
+            item(key = "hint") {
+                Text(
+                    "Sola kaydır: sil · Sağa kaydır: tamamla · Basılı tut: paylaş",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(start = 4.dp),
+                )
+            }
             items(state.selectedItems, key = { it.id }) { reminder ->
                 SwipeableReminderCard(
                     reminder = reminder,
                     onClick = { onOpen(reminder.id) },
                     onToggleDone = { viewModel.toggleDone(reminder) },
-                    onDelete = { viewModel.delete(reminder) },
+                    onDelete = { deleteWithUndo(reminder) },
+                    onLongClick = { menuFor = reminder },
                     showDate = false,
                     modifier = Modifier.animateItem(),
                 )
             }
         }
+    }
+
+    menuFor?.let { reminder ->
+        ReminderActionsSheet(
+            reminder = reminder,
+            onDismiss = { menuFor = null },
+            onEdit = { onOpen(reminder.id) },
+            onDelete = { deleteWithUndo(reminder) },
+        )
     }
 }
 

@@ -11,6 +11,7 @@ import com.aydinsogut.reminder.util.startOfDayMillis
 import com.aydinsogut.reminder.util.toEpochMillis
 import com.aydinsogut.reminder.widget.ReminderWidget
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 
 /**
@@ -47,6 +48,20 @@ class ReminderRepository(
             colorIndex = (date.dayOfMonth + parsed.title.length).mod(ReminderPalette.colors.size),
         )
         return reminder.copy(id = save(reminder))
+    }
+
+    suspend fun all(): List<Reminder> = dao.observeAll().first()
+
+    /** Tamamlanan hatırlatıcıları siler; silinen sayısını döndürür. */
+    suspend fun deleteCompleted(): Int {
+        val done = all().filter { it.isDone }
+        done.forEach {
+            scheduler.cancel(it.id)
+            notifications.cancel(it.id)
+            dao.delete(it)
+        }
+        refreshWidget()
+        return done.size
     }
 
     suspend fun save(reminder: Reminder): Long {
@@ -109,6 +124,18 @@ class ReminderRepository(
             setDone(id, true)
         } else {
             notifications.cancel(id)
+        }
+    }
+
+    /** Widget'taki ✓: tek seferlikse tamamlar, tekrarlıysa bir sonraki tekrara geçirir. */
+    suspend fun completeOnce(id: Long) {
+        val reminder = dao.getById(id) ?: return
+        if (reminder.repeat == RepeatRule.NONE) {
+            setDone(id, true)
+        } else {
+            notifications.cancel(id)
+            val base = maxOf(System.currentTimeMillis(), reminder.triggerAt)
+            save(reminder.copy(triggerAt = reminder.nextTriggerAfter(base)))
         }
     }
 

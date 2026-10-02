@@ -39,6 +39,17 @@ data class EditUiState(
     val triggerAt: Long get() = LocalDateTime.of(date, time).toEpochMillis()
     val isInPast: Boolean get() = repeat == RepeatRule.NONE && triggerAt <= System.currentTimeMillis()
     val canSave: Boolean get() = title.isNotBlank()
+
+    /** Paylaşım için ekrandaki hâliyle hatırlatıcı (henüz kaydedilmemiş değişiklikler dahil). */
+    fun asReminder(): Reminder = Reminder(
+        id = id,
+        title = title.trim(),
+        note = note.trim(),
+        triggerAt = triggerAt,
+        repeat = repeat,
+        colorIndex = colorIndex,
+        createdAt = createdAt ?: System.currentTimeMillis(),
+    )
 }
 
 class EditReminderViewModel(

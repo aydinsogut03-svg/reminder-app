@@ -34,6 +34,7 @@ import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.HourglassTop
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Schedule
@@ -83,6 +84,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aydinsogut.reminder.appContainer
+import com.aydinsogut.reminder.ui.components.ReminderActionsSheet
 import com.aydinsogut.reminder.data.RepeatRule
 import com.aydinsogut.reminder.ui.theme.ReminderPalette
 import com.aydinsogut.reminder.util.TimeFormats
@@ -146,6 +148,11 @@ fun EditReminderScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var showShare by remember { mutableStateOf(false) }
+
+    if (showShare) {
+        ReminderActionsSheet(reminder = state.asReminder(), onDismiss = { showShare = false })
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -158,6 +165,11 @@ fun EditReminderScreen(
                     }
                 },
                 actions = {
+                    if (state.canSave) {
+                        IconButton(onClick = { showShare = true }) {
+                            Icon(Icons.Rounded.Share, contentDescription = "Paylaş")
+                        }
+                    }
                     if (!state.isNew) {
                         IconButton(onClick = { confirmDelete = true }) {
                             Icon(Icons.Rounded.Delete, contentDescription = "Sil", tint = MaterialTheme.colorScheme.error)

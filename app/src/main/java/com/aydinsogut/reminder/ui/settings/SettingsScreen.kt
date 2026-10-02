@@ -1,6 +1,23 @@
 package com.aydinsogut.reminder.ui.settings
 
 import android.content.Intent
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.rounded.DeleteSweep
+import androidx.compose.material.icons.rounded.Draw
+import androidx.compose.material.icons.rounded.Email
+import androidx.compose.material.icons.rounded.IosShare
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Widgets
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.input.KeyboardType
+import com.aydinsogut.reminder.share.ReminderSharing
+import com.aydinsogut.reminder.widget.ReminderWidgetReceiver
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -73,7 +90,7 @@ import com.aydinsogut.reminder.ui.theme.ReminderPalette
 fun SettingsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val container = context.appContainer
-    val viewModel = viewModel { SettingsViewModel(container.settings, container.gemini, container.speaker) }
+    val viewModel = viewModel { SettingsViewModel(container.settings, container.repository, container.gemini, container.speaker) }
     val nanoStatus by viewModel.nanoStatus.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
 
@@ -82,6 +99,8 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         exactAlarmOk = container.scheduler.canScheduleExact()
         onPauseOrDispose { }
     }
+    var editEmail by remember { mutableStateOf(false) }
+    var confirmClear by remember { mutableStateOf(false) }
     val versionName = remember {
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "-"
     }
@@ -220,6 +239,78 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         }
 
         item {
+            SettingsGroup("Kalem") {
+                SettingRow(
+                    icon = Icons.Rounded.Draw,
+                    tint = ReminderPalette.color(2),
+                    title = "Kendiliğinden kaydet",
+                    subtitle = "Kalemle yazıp bıraktıktan sonra beklenecek süre. Kapalıysa ✓ ile kaydedersin.",
+                )
+                FlowRow(
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    AppSettings.InkAutoSaveOptions.forEach { seconds ->
+                        FilterChip(
+                            selected = settings.inkAutoSaveSeconds == seconds,
+                            onClick = { viewModel.setInkAutoSaveSeconds(seconds) },
+                            label = { Text(if (seconds == 0) "Kapalı" else "$seconds sn") },
+                        )
+                    }
+                }
+                Divider()
+                SettingRow(
+                    icon = Icons.Rounded.Widgets,
+                    tint = ReminderPalette.color(0),
+                    title = "Widget'ı ana ekrana ekle",
+                    subtitle = "Bir güne dokun, kalemle yaz",
+                    onClick = { requestPinWidget(context) },
+                ) { Chevron() }
+            }
+        }
+
+        item {
+            SettingsGroup("Paylaşım") {
+                SettingRow(
+                    icon = Icons.Rounded.Email,
+                    tint = ReminderPalette.color(5),
+                    title = "E-posta alıcısı",
+                    subtitle = settings.shareEmail.ifBlank { "Belirlenmedi, her seferinde yazarsın" },
+                    onClick = { editEmail = true },
+                ) { Chevron() }
+                Divider()
+                SettingRow(
+                    icon = Icons.Rounded.Share,
+                    tint = ReminderPalette.color(4),
+                    title = "Paylaşım imzası",
+                    subtitle = "Paylaşılan metnin sonuna \"Hatırlatıcı ile paylaşıldı\" ekler",
+                ) {
+                    Switch(checked = settings.shareSignature, onCheckedChange = viewModel::setShareSignature)
+                }
+            }
+        }
+
+        item {
+            SettingsGroup("Veriler") {
+                SettingRow(
+                    icon = Icons.Rounded.IosShare,
+                    tint = ReminderPalette.color(1),
+                    title = "Tümünü dışa aktar",
+                    subtitle = "Takvim dosyası (.ics): Google Takvim, Samsung Takvim veya e-postayla yedek",
+                    onClick = { viewModel.exportAll { ReminderSharing.exportAll(context, it) } },
+                ) { Chevron() }
+                Divider()
+                SettingRow(
+                    icon = Icons.Rounded.DeleteSweep,
+                    tint = MaterialTheme.colorScheme.error,
+                    title = "Tamamlananları temizle",
+                    subtitle = "Biten hatırlatıcıları kalıcı olarak siler",
+                    onClick = { confirmClear = true },
+                ) { Chevron() }
+            }
+        }
+
+        item {
             SettingsGroup("Bildirimler") {
                 SettingRow(
                     icon = Icons.Rounded.NotificationsActive,
@@ -256,6 +347,62 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 SettingRow(Icons.Rounded.Info, MaterialTheme.colorScheme.onSurfaceVariant, "Hatırlatıcı", "Sürüm $versionName")
             }
         }
+    }
+
+    if (editEmail) {
+        EmailDialog(
+            initial = settings.shareEmail,
+            onDismiss = { editEmail = false },
+            onSave = {
+                viewModel.setShareEmail(it)
+                editEmail = false
+            },
+        )
+    }
+    if (confirmClear) {
+        AlertDialog(
+            onDismissRequest = { confirmClear = false },
+            title = { Text("Tamamlananlar silinsin mi?") },
+            text = { Text("Biten hatırlatıcılar kalıcı olarak silinir.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmClear = false
+                    viewModel.clearCompleted { count ->
+                        Toast.makeText(context, "$count hatırlatıcı silindi", Toast.LENGTH_SHORT).show()
+                    }
+                }) { Text("Sil", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("Vazgeç") } },
+        )
+    }
+}
+
+@Composable
+private fun EmailDialog(initial: String, onDismiss: () -> Unit, onSave: (String) -> Unit) {
+    var value by remember { mutableStateOf(initial) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("E-posta alıcısı") },
+        text = {
+            OutlinedTextField(
+                value = value,
+                onValueChange = { value = it },
+                placeholder = { Text("ornek@mail.com") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            )
+        },
+        confirmButton = { TextButton(onClick = { onSave(value) }) { Text("Kaydet") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Vazgeç") } },
+    )
+}
+
+private fun requestPinWidget(context: Context) {
+    val manager = AppWidgetManager.getInstance(context)
+    if (manager.isRequestPinAppWidgetSupported) {
+        manager.requestPinAppWidget(ComponentName(context, ReminderWidgetReceiver::class.java), null, null)
+    } else {
+        Toast.makeText(context, "Ana ekrana uzun bas, Widget'lar'dan Hatırlatıcı'yı seç", Toast.LENGTH_LONG).show()
     }
 }
 
