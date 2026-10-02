@@ -21,34 +21,38 @@ object ReminderPalette {
 
 val Success = Color(0xFF16A34A)
 
+/** Bir vurgu renginin zemine karışan yumuşak tonu (açık temada pastel, koyuda hafif parıltı). */
+fun Color.soft(amount: Float = 0.12f): Color = copy(alpha = amount)
+
+/** Beyaz zemin üzerinde soft, pastel tonlar: gölge yerine hafif renkli yüzeyler. */
 val LightColors = lightColorScheme(
-    primary = Color(0xFF4F46E5),
+    primary = Color(0xFF5B5FE3),
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFE0E7FF),
-    onPrimaryContainer = Color(0xFF1E1B4B),
-    secondary = Color(0xFF0D9488),
+    primaryContainer = Color(0xFFEEEEFF),
+    onPrimaryContainer = Color(0xFF26236F),
+    secondary = Color(0xFF0F9F8F),
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFCCFBF1),
-    onSecondaryContainer = Color(0xFF042F2E),
-    tertiary = Color(0xFFD97706),
-    tertiaryContainer = Color(0xFFFEF3C7),
-    onTertiaryContainer = Color(0xFF451A03),
-    background = Color(0xFFF5F6FB),
-    onBackground = Color(0xFF111827),
-    surface = Color(0xFFF5F6FB),
-    onSurface = Color(0xFF111827),
-    surfaceVariant = Color(0xFFE9EBF3),
-    onSurfaceVariant = Color(0xFF5B6275),
+    secondaryContainer = Color(0xFFE4F6F2),
+    onSecondaryContainer = Color(0xFF0B3B35),
+    tertiary = Color(0xFFD9861A),
+    tertiaryContainer = Color(0xFFFFF3E0),
+    onTertiaryContainer = Color(0xFF5A3606),
+    background = Color.White,
+    onBackground = Color(0xFF1C1F2A),
+    surface = Color.White,
+    onSurface = Color(0xFF1C1F2A),
+    surfaceVariant = Color(0xFFF1F2F7),
+    onSurfaceVariant = Color(0xFF6B7083),
     surfaceContainerLowest = Color.White,
-    surfaceContainerLow = Color.White,
-    surfaceContainer = Color(0xFFF0F1F8),
-    surfaceContainerHigh = Color(0xFFEAECF4),
-    surfaceContainerHighest = Color(0xFFE3E6F0),
-    outline = Color(0xFFC5C9D6),
-    outlineVariant = Color(0xFFE2E4EC),
-    error = Color(0xFFDC2626),
-    errorContainer = Color(0xFFFEE2E2),
-    onErrorContainer = Color(0xFF7F1D1D),
+    surfaceContainerLow = Color(0xFFF7F7FB),
+    surfaceContainer = Color(0xFFF2F3F8),
+    surfaceContainerHigh = Color(0xFFECEEF4),
+    surfaceContainerHighest = Color(0xFFE6E8F0),
+    outline = Color(0xFFCDD0DB),
+    outlineVariant = Color(0xFFEDEEF3),
+    error = Color(0xFFE5484D),
+    errorContainer = Color(0xFFFDECEC),
+    onErrorContainer = Color(0xFF7A1A1D),
 )
 
 val DarkColors = darkColorScheme(

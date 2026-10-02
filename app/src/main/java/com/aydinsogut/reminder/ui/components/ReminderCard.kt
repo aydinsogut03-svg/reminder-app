@@ -7,10 +7,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -53,7 +52,7 @@ import com.aydinsogut.reminder.util.TimeFormats
 import com.aydinsogut.reminder.util.formatReminderTime
 import com.aydinsogut.reminder.util.toLocalDateTime
 
-private val CardShape = RoundedCornerShape(20.dp)
+private val CardShape = RoundedCornerShape(22.dp)
 
 /** Sağa kaydır: tamamla / geri al. Sola kaydır: sil. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -136,51 +135,48 @@ fun ReminderCard(
         reminder.triggerAt.toLocalDateTime().format(TimeFormats.time)
     }
 
+    val container = if (reminder.isDone) {
+        MaterialTheme.colorScheme.surfaceContainerLow
+    } else {
+        lerp(MaterialTheme.colorScheme.surface, accent, 0.08f)
+    }
+
     Surface(
         onClick = onClick,
         shape = CardShape,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shadowElevation = 1.dp,
+        color = container,
         modifier = modifier.fillMaxWidth(),
     ) {
-        Row(Modifier.height(IntrinsicSize.Min)) {
-            Box(
-                Modifier
-                    .width(5.dp)
-                    .fillMaxHeight()
-                    .background(accent),
-            )
-            Row(
-                modifier = Modifier
-                    .padding(start = 14.dp, end = 16.dp, top = 14.dp, bottom = 14.dp)
-                    .alpha(if (reminder.isDone) 0.55f else 1f),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                DoneToggle(done = reminder.isDone, accent = accent, onToggle = onToggleDone)
-                Spacer(Modifier.width(14.dp))
-                Column(Modifier.weight(1f)) {
+        Row(
+            modifier = Modifier
+                .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 14.dp)
+                .alpha(if (reminder.isDone) 0.6f else 1f),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            DoneToggle(done = reminder.isDone, accent = accent, onToggle = onToggleDone)
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = reminder.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    textDecoration = if (reminder.isDone) TextDecoration.LineThrough else null,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (reminder.note.isNotBlank()) {
                     Text(
-                        text = reminder.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        textDecoration = if (reminder.isDone) TextDecoration.LineThrough else null,
-                        maxLines = 1,
+                        text = reminder.note,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    if (reminder.note.isNotBlank()) {
-                        Text(
-                            text = reminder.note,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        InfoChip(Icons.Rounded.Schedule, if (overdue) "Kaçırıldı · $timeText" else timeText, timeTint)
-                        if (reminder.repeat != RepeatRule.NONE) {
-                            InfoChip(Icons.Rounded.Repeat, reminder.repeat.label, MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    InfoChip(Icons.Rounded.Schedule, if (overdue) "Kaçırıldı · $timeText" else timeText, timeTint)
+                    if (reminder.repeat != RepeatRule.NONE) {
+                        InfoChip(Icons.Rounded.Repeat, reminder.repeat.label, MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }

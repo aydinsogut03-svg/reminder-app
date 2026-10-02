@@ -181,6 +181,20 @@ object TurkishReminderParser {
         return ParsedReminder(title, dateTime)
     }
 
+    /**
+     * Takvimde seçili güne yazılan metin: saat varsa o güne uygulanır, "yarın" gibi göreli
+     * ifadeler o güne göre çözülür, zaman yoksa varsayılan saat kullanılır.
+     */
+    fun parseForDay(
+        text: String,
+        day: LocalDate,
+        defaultTime: LocalTime = LocalTime.of(9, 0),
+    ): ParsedReminder {
+        val parsed = parse(text, day.atStartOfDay(), defaultTime)
+        val title = parsed.title.ifBlank { text.trim() }
+        return ParsedReminder(title, parsed.dateTime ?: LocalDateTime.of(day, defaultTime))
+    }
+
     private fun adjustForPeriod(time: LocalTime?, period: Period?): LocalTime? {
         if (time == null) {
             return when (period) {

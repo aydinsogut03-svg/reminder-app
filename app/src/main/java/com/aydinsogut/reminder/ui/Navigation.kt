@@ -3,6 +3,10 @@ package com.aydinsogut.reminder.ui
 import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -36,12 +40,19 @@ fun ReminderNavHost(
     onLaunchRequestHandled: () -> Unit,
 ) {
     val navController = rememberNavController()
+    // Kalem kısayolu: takvimdeki hazır yazı alanını aç.
+    var calendarSignal by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(launchRequest) {
         val route = when (launchRequest) {
             is LaunchRequest.NewReminder -> Routes.edit(text = launchRequest.text, voice = launchRequest.voice)
             is LaunchRequest.OpenReminder -> Routes.edit(id = launchRequest.id)
-            LaunchRequest.Ink -> Routes.INK
+            LaunchRequest.Ink -> {
+                navController.popBackStack(Routes.HOME, inclusive = false)
+                calendarSignal++
+                onLaunchRequestHandled()
+                return@LaunchedEffect
+            }
             null -> return@LaunchedEffect
         }
         navController.navigate(route) { launchSingleTop = true }
@@ -53,8 +64,8 @@ fun ReminderNavHost(
             HomeScreen(
                 onAdd = { date -> navController.navigate(Routes.edit(date = date)) },
                 onVoice = { navController.navigate(Routes.edit(voice = true)) },
-                onInk = { navController.navigate(Routes.INK) },
                 onOpen = { id -> navController.navigate(Routes.edit(id = id)) },
+                calendarSignal = calendarSignal,
             )
         }
         composable(Routes.INK) {

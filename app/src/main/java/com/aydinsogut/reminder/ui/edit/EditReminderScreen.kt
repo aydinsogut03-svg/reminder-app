@@ -75,6 +75,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -196,8 +197,7 @@ fun EditReminderScreen(
             // Başlık ve not kartı
             Surface(
                 shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                shadowElevation = 1.dp,
+                color = lerp(MaterialTheme.colorScheme.surface, accent, 0.07f),
             ) {
                 Row {
                     Box(
@@ -450,8 +450,7 @@ private fun PickerCard(
     Surface(
         onClick = onClick,
         shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shadowElevation = 1.dp,
+        color = lerp(MaterialTheme.colorScheme.surface, accent, 0.06f),
         modifier = modifier,
     ) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {

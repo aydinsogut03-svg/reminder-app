@@ -36,6 +36,16 @@ import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.lerp
+import com.aydinsogut.reminder.data.AppSettings
+import com.aydinsogut.reminder.util.toLocalDateTime
+import kotlinx.coroutines.launch
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -69,12 +79,29 @@ private val WeekDays = listOf("Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz")
 fun CalendarScreen(
     onAddForDate: (LocalDate) -> Unit,
     onOpen: (Long) -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
-    val repository = LocalContext.current.appContainer.repository
-    val viewModel = viewModel { CalendarViewModel(repository) }
+    val container = LocalContext.current.appContainer
+    val viewModel = viewModel { CalendarViewModel(container.repository, container.settings) }
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val settings by container.settings.settings.collectAsStateWithLifecycle(initialValue = AppSettings())
     val isToday = state.selected == LocalDate.now()
+    val scope = rememberCoroutineScope()
+
+    fun saveInk(text: String) {
+        val date = state.selected
+        scope.launch {
+            val saved = viewModel.addFromInk(text, date) ?: return@launch
+            snackbarHostState.currentSnackbarData?.dismiss()
+            val result = snackbarHostState.showSnackbar(
+                message = "\"${saved.title}\" · ${saved.triggerAt.toLocalDateTime().format(TimeFormats.short)}",
+                actionLabel = "Geri al",
+                duration = SnackbarDuration.Short,
+            )
+            if (result == SnackbarResult.ActionPerformed) viewModel.undoAdd(saved)
+        }
+    }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -110,6 +137,14 @@ fun CalendarScreen(
             )
         }
 
+        item(key = "ink") {
+            DayInkCard(
+                date = state.selected,
+                defaultTime = settings.defaultTime,
+                onSubmit = ::saveInk,
+            )
+        }
+
         item(key = "day-header") {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 10.dp),
@@ -126,20 +161,21 @@ fun CalendarScreen(
                         style = MaterialTheme.typography.titleLarge,
                     )
                 }
-                FilledTonalButton(onClick = { onAddForDate(state.selected) }) {
+                TextButton(onClick = { onAddForDate(state.selected) }) {
                     Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("Not ekle")
+                    Spacer(Modifier.width(4.dp))
+                    Text("Ayrıntılı ekle")
                 }
             }
         }
 
         if (state.selectedItems.isEmpty()) {
             item(key = "empty") {
-                EmptyState(
-                    icon = Icons.Rounded.EventAvailable,
-                    title = "Bu gün boş",
-                    message = "\"Not ekle\" ile bu güne bir hatırlatıcı ya da not düşebilirsin.",
+                Text(
+                    text = "Bu gün için henüz bir şey yok. Yukarıya yazman yeterli.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp, top = 2.dp, bottom = 8.dp),
                 )
             }
         } else {
@@ -168,8 +204,7 @@ private fun MonthCard(
 ) {
     Surface(
         shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shadowElevation = 1.dp,
+        color = lerp(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.primary, 0.045f),
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -184,10 +219,10 @@ private fun MonthCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                FilledTonalIconButton(onClick = onPrevious) {
+                FilledTonalIconButton(onClick = onPrevious, colors = navButtonColors()) {
                     Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = "Önceki ay")
                 }
-                FilledTonalIconButton(onClick = onNext) {
+                FilledTonalIconButton(onClick = onNext, colors = navButtonColors()) {
                     Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = "Sonraki ay")
                 }
             }
@@ -220,6 +255,12 @@ private fun MonthCard(
         }
     }
 }
+
+@Composable
+private fun navButtonColors() = IconButtonDefaults.filledTonalIconButtonColors(
+    containerColor = MaterialTheme.colorScheme.surface,
+    contentColor = MaterialTheme.colorScheme.primary,
+)
 
 @Composable
 private fun MonthGrid(
@@ -278,8 +319,8 @@ private fun DayCell(
 
     Box(
         modifier = modifier
-            .aspectRatio(1f)
-            .padding(3.dp)
+            .aspectRatio(1.18f)
+            .padding(2.dp)
             .clip(shape)
             .background(if (isSelected) colors.primary else Color.Transparent)
             .then(if (isToday && !isSelected) Modifier.border(1.5.dp, colors.primary, shape) else Modifier)

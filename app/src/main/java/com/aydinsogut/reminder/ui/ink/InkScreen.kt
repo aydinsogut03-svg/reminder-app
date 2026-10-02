@@ -58,8 +58,6 @@ import com.aydinsogut.reminder.ai.InkStroke
 import com.aydinsogut.reminder.appContainer
 import kotlinx.coroutines.delay
 
-private enum class ModelState { CHECKING, DOWNLOADING, READY, FAILED }
-
 /** S Pen ya da parmakla el yazısı; yazılanı metne çevirip hatırlatıcıya dönüştürür. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -69,36 +67,22 @@ fun InkScreen(
 ) {
     val recognizer = LocalContext.current.appContainer.handwriting
     val strokes = remember { mutableStateListOf<InkStroke>() }
-    var current by remember { mutableStateOf<InkStroke?>(null) }
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
-    var stylusSeen by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     var recognizing by remember { mutableStateOf(false) }
-    var modelState by remember { mutableStateOf(ModelState.CHECKING) }
-
-    LaunchedEffect(Unit) {
-        modelState = if (recognizer.isModelReady()) {
-            ModelState.READY
-        } else {
-            modelState = ModelState.DOWNLOADING
-            if (recognizer.ensureModel()) ModelState.READY else ModelState.FAILED
-        }
-    }
+    val modelState by rememberInkModelState(recognizer)
 
     LaunchedEffect(strokes.size, modelState) {
         if (strokes.isEmpty()) {
             text = ""
             return@LaunchedEffect
         }
-        if (modelState != ModelState.READY) return@LaunchedEffect
+        if (modelState != InkModelState.READY) return@LaunchedEffect
         delay(700)
         recognizing = true
         text = recognizer.recognize(strokes.toList(), canvasSize.width.toFloat(), canvasSize.height.toFloat())
         recognizing = false
     }
-
-    val inkColor = MaterialTheme.colorScheme.onSurface
-    val lineColor = MaterialTheme.colorScheme.outlineVariant
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -134,15 +118,15 @@ fun InkScreen(
                 placeholder = {
                     Text(
                         when (modelState) {
-                            ModelState.CHECKING -> "Hazırlanıyor…"
-                            ModelState.DOWNLOADING -> "Türkçe el yazısı modeli indiriliyor (bir kerelik)…"
-                            ModelState.FAILED -> "Model indirilemedi, internet bağlantını kontrol et"
-                            ModelState.READY -> "Aşağıya yaz, ör. \"Yarın 10'da dişçi\""
+                            InkModelState.CHECKING -> "Hazırlanıyor…"
+                            InkModelState.DOWNLOADING -> "Türkçe el yazısı modeli indiriliyor (bir kerelik)…"
+                            InkModelState.FAILED -> "Model indirilemedi, internet bağlantını kontrol et"
+                            InkModelState.READY -> "Aşağıya yaz, ör. \"Yarın 10'da dişçi\""
                         },
                     )
                 },
                 trailingIcon = {
-                    if (recognizing || modelState == ModelState.DOWNLOADING) {
+                    if (recognizing || modelState == InkModelState.DOWNLOADING) {
                         CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
                     }
                 },
@@ -153,65 +137,13 @@ fun InkScreen(
             Surface(
                 shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
-                shadowElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth().weight(1f),
             ) {
-                Box {
-                    Canvas(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .onSizeChanged { canvasSize = it }
-                            .pointerInput(Unit) {
-                                awaitEachGesture {
-                                    val down = awaitFirstDown(requireUnconsumed = false)
-                                    val isStylus = down.type == PointerType.Stylus || down.type == PointerType.Eraser
-                                    // Kalem bir kez kullanıldıysa avuç içi dokunuşlarını yok say.
-                                    if (stylusSeen && !isStylus) return@awaitEachGesture
-                                    if (isStylus) stylusSeen = true
-                                    val points = mutableListOf(InkPoint(down.position.x, down.position.y, down.uptimeMillis))
-                                    current = points.toList()
-                                    down.consume()
-                                    while (true) {
-                                        val event = awaitPointerEvent()
-                                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                                        change.historical.forEach { h ->
-                                            points += InkPoint(h.position.x, h.position.y, h.uptimeMillis)
-                                        }
-                                        points += InkPoint(change.position.x, change.position.y, change.uptimeMillis)
-                                        change.consume()
-                                        current = points.toList()
-                                        if (!change.pressed) break
-                                    }
-                                    current = null
-                                    strokes += points.toList()
-                                }
-                            },
-                    ) {
-                        val spacing = 56.dp.toPx()
-                        var y = spacing
-                        while (y < size.height) {
-                            drawLine(lineColor, Offset(24f, y), Offset(size.width - 24f, y), strokeWidth = 1.dp.toPx())
-                            y += spacing
-                        }
-                        val style = Stroke(width = 3.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-                        strokes.forEach { drawPath(it.toPath(), inkColor, style = style) }
-                        current?.let { drawPath(it.toPath(), inkColor, style = style) }
-                    }
-                    if (strokes.isEmpty() && current == null) {
-                        Row(
-                            modifier = Modifier.align(Alignment.Center),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(Icons.Rounded.Draw, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                "S Pen ya da parmağınla buraya yaz",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                }
+                InkCanvas(
+                    strokes = strokes,
+                    onSize = { canvasSize = it },
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
 
             Button(
@@ -227,19 +159,4 @@ fun InkScreen(
             Spacer(Modifier.height(4.dp))
         }
     }
-}
-
-private fun InkStroke.toPath(): Path = Path().apply {
-    if (isEmpty()) return@apply
-    moveTo(first().x, first().y)
-    if (size == 1) {
-        lineTo(first().x + 0.1f, first().y + 0.1f)
-        return@apply
-    }
-    for (i in 1 until size) {
-        val prev = this@toPath[i - 1]
-        val point = this@toPath[i]
-        quadraticTo(prev.x, prev.y, (prev.x + point.x) / 2f, (prev.y + point.y) / 2f)
-    }
-    lineTo(last().x, last().y)
 }

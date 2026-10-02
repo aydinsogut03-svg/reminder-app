@@ -155,7 +155,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     icon = Icons.Rounded.TaskAlt,
                     tint = ReminderPalette.color(6),
                     title = "Tamamlananları göster",
-                    subtitle = "Listenin altında biten hatırlatıcılar",
+                    subtitle = "Geçmiş sekmesinde biten hatırlatıcılar",
                 ) {
                     Switch(checked = settings.showCompleted, onCheckedChange = viewModel::setShowCompleted)
                 }
@@ -271,7 +271,6 @@ private fun SettingsGroup(title: String, content: @Composable () -> Unit) {
         Surface(
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceContainerLow,
-            shadowElevation = 1.dp,
         ) {
             Column { content() }
         }

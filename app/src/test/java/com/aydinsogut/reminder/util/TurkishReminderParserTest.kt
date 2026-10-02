@@ -3,7 +3,9 @@ package com.aydinsogut.reminder.util
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 class TurkishReminderParserTest {
     // 2 Ekim 2026 Cuma, 11:00
@@ -85,5 +87,21 @@ class TurkishReminderParserTest {
 
     @Test fun numericDate() {
         assertEquals(LocalDateTime.of(2026, 12, 24, 9, 0), parse("24.12.2026 hediye al").dateTime)
+    }
+
+    @Test fun dayInkWithTime() {
+        val r = TurkishReminderParser.parseForDay("dişçi 10'da", LocalDate.of(2026, 10, 29))
+        assertEquals("Dişçi", r.title)
+        assertEquals(LocalDateTime.of(2026, 10, 29, 10, 0), r.dateTime)
+    }
+
+    @Test fun dayInkWithoutTimeUsesDefault() {
+        val r = TurkishReminderParser.parseForDay("Annemi ara", LocalDate.of(2026, 10, 29), LocalTime.of(8, 0))
+        assertEquals("Annemi ara", r.title)
+        assertEquals(LocalDateTime.of(2026, 10, 29, 8, 0), r.dateTime)
+    }
+
+    @Test fun dayInkAfternoonHour() {
+        assertEquals(LocalDateTime.of(2026, 10, 29, 15, 0), TurkishReminderParser.parseForDay("3'te toplantı", LocalDate.of(2026, 10, 29)).dateTime)
     }
 }

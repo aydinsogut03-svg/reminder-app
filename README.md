@@ -2,12 +2,13 @@
 
 Android hatırlatıcı uygulaması: bildirim gönderir, ana ekran widget'ı vardır ve takvimde günlere not düşmeyi sağlar.
 
-## Özellikler (v0.4)
+## Özellikler (v0.5)
 
 - Hatırlatıcı ekleme, düzenleme, silme (başlık, not, tarih, saat)
 - Zamanı gelince bildirim, bildirimden **Tamamlandı** ve **10 dk ertele**
 - Tekrarlama: her gün, hafta, ay, yıl
-- Aylık takvim: notu olan günler işaretli, bir güne dokununca o günün notları ve "Not ekle"
+- Ana sayfa: sıradaki uyarı ve geri sayım, kalem/ses/yeni hızlı düğmeleri, **Yaklaşan** ve **Geçmiş** (kaçırılan + tamamlanan) sekmeleri
+- Aylık takvim: notu olan günler işaretli; altında hep açık yazı alanı var, kalemle yazınca seçili güne kendiliğinden eklenir ("10'da dişçi" gibi saat yazılırsa o saate kurulur)
 - Ana ekran widget'ı: yaklaşan hatırlatıcılar ve hızlı ekleme
 - Telefon yeniden başlayınca alarmlar korunur
 - Sesle ekleme: "yarın saat 9'da annemi ara" gibi Türkçe cümlelerden başlık ve zamanı internetsiz anlar (`util/TurkishReminderParser.kt`)
@@ -16,7 +17,7 @@ Android hatırlatıcı uygulaması: bildirim gönderir, ana ekran widget'ı vard
 - Sesli hatırlatma: zamanı gelince başlık ve not Türkçe okunur (telefon sessizdeyken okumaz)
 - Ayarlar: tema, erteleme süresi, varsayılan saat, tamamlananları gizleme, sesle direkt kaydetme
 - Telefon entegrasyonu: Paylaş menüsünden metni hatırlatıcı yapma, simgeye basılı tutunca "Sesle ekle" ve "Yeni" kısayolları, widget'ta mikrofon düğmesi
-- Tasarım: renkli kartlar, günlere göre gruplu liste, özet kartları, kaydırarak tamamla/sil (geri alınabilir), hızlı zaman seçimleri, her hatırlatıcıya renk, açık ve karanlık tema
+- Tasarım: beyaz zemin, pastel renkli gölgesiz kartlar, günlere göre gruplu liste, özet kartları, kaydırarak tamamla/sil (geri alınabilir), hızlı zaman seçimleri, her hatırlatıcıya renk, açık ve karanlık tema
 
 ## APK'yı indirme
 
