@@ -17,6 +17,16 @@ android {
         versionName = "0.1.0"
     }
 
+    // Sabit debug anahtarı: her CI derlemesi aynı imzayı taşır, yeni APK eskisinin üzerine kurulur.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
