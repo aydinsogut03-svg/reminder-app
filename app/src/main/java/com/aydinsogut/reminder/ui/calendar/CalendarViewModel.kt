@@ -18,7 +18,8 @@ import java.time.YearMonth
 data class CalendarUiState(
     val month: YearMonth = YearMonth.now(),
     val selected: LocalDate = LocalDate.now(),
-    val countByDate: Map<LocalDate, Int> = emptyMap(),
+    /** Her gün için o günkü hatırlatıcıların renk sıraları (nokta göstergesi için). */
+    val colorsByDate: Map<LocalDate, List<Int>> = emptyMap(),
     val selectedItems: List<Reminder> = emptyList(),
 )
 
@@ -32,7 +33,7 @@ class CalendarViewModel(private val repository: ReminderRepository) : ViewModel(
             CalendarUiState(
                 month = month,
                 selected = selected,
-                countByDate = byDate.mapValues { it.value.size },
+                colorsByDate = byDate.mapValues { (_, items) -> items.map { it.colorIndex } },
                 selectedItems = byDate[selected].orEmpty(),
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CalendarUiState())
@@ -47,6 +48,10 @@ class CalendarViewModel(private val repository: ReminderRepository) : ViewModel(
     }
 
     fun goToToday() = select(LocalDate.now())
+
+    fun delete(reminder: Reminder) {
+        viewModelScope.launch { repository.delete(reminder) }
+    }
 
     fun toggleDone(reminder: Reminder) {
         viewModelScope.launch { repository.setDone(reminder.id, !reminder.isDone) }

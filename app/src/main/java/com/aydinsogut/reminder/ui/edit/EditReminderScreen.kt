@@ -1,39 +1,58 @@
 package com.aydinsogut.reminder.ui.edit
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Repeat
-import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.rounded.Bedtime
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.HourglassTop
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.WbSunny
+import androidx.compose.material.icons.rounded.Weekend
+import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -41,22 +60,29 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aydinsogut.reminder.appContainer
 import com.aydinsogut.reminder.data.RepeatRule
+import com.aydinsogut.reminder.ui.theme.ReminderPalette
 import com.aydinsogut.reminder.util.TimeFormats
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
+import java.time.temporal.TemporalAdjusters
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EditReminderScreen(
     id: Long,
@@ -68,97 +94,171 @@ fun EditReminderScreen(
         EditReminderViewModel(repository, id, initialDate)
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val accent = ReminderPalette.color(state.colorIndex)
 
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
-    var showRepeatMenu by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text(if (state.isNew) "Yeni hatırlatıcı" else "Hatırlatıcıyı düzenle") },
+                title = { Text(if (state.isNew) "Yeni hatırlatıcı" else "Düzenle") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Geri")
+                        Icon(Icons.Rounded.Close, contentDescription = "Kapat")
                     }
                 },
                 actions = {
                     if (!state.isNew) {
                         IconButton(onClick = { confirmDelete = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Sil")
+                            Icon(Icons.Rounded.Delete, contentDescription = "Sil", tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
+        },
+        bottomBar = {
+            Surface(color = MaterialTheme.colorScheme.background) {
+                Button(
+                    onClick = { viewModel.save(onBack) },
+                    enabled = state.canSave,
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .imePadding()
+                        .padding(16.dp)
+                        .height(56.dp),
+                ) {
+                    Icon(Icons.Rounded.Check, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Kaydet", style = MaterialTheme.typography.titleMedium)
+                }
+            }
         },
     ) { padding ->
         Column(
             modifier = Modifier
                 .padding(padding)
-                .imePadding()
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            OutlinedTextField(
-                value = state.title,
-                onValueChange = viewModel::onTitleChange,
-                label = { Text("Başlık") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            OutlinedTextField(
-                value = state.note,
-                onValueChange = viewModel::onNoteChange,
-                label = { Text("Not") },
-                minLines = 3,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.weight(1.4f)) {
-                    Icon(Icons.Default.CalendarMonth, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(state.date.format(TimeFormats.date))
-                }
-                OutlinedButton(onClick = { showTimePicker = true }, modifier = Modifier.weight(1f)) {
-                    Icon(Icons.Default.Schedule, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(state.time.format(TimeFormats.time))
-                }
-            }
-            Box {
-                OutlinedButton(onClick = { showRepeatMenu = true }, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Default.Repeat, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(state.repeat.label)
-                }
-                DropdownMenu(expanded = showRepeatMenu, onDismissRequest = { showRepeatMenu = false }) {
-                    RepeatRule.entries.forEach { rule ->
-                        DropdownMenuItem(
-                            text = { Text(rule.label) },
-                            onClick = {
-                                viewModel.onRepeatChange(rule)
-                                showRepeatMenu = false
-                            },
+            // Başlık ve not kartı
+            Surface(
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                shadowElevation = 1.dp,
+            ) {
+                Row {
+                    Box(
+                        Modifier
+                            .padding(start = 16.dp, top = 22.dp)
+                            .size(14.dp)
+                            .clip(CircleShape)
+                            .background(accent),
+                    )
+                    Column {
+                        TextField(
+                            value = state.title,
+                            onValueChange = viewModel::onTitleChange,
+                            placeholder = { Text("Ne hatırlatayım?", style = MaterialTheme.typography.titleLarge) },
+                            textStyle = MaterialTheme.typography.titleLarge,
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                            colors = transparentFieldColors(),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        TextField(
+                            value = state.note,
+                            onValueChange = viewModel::onNoteChange,
+                            placeholder = { Text("Not ekle (isteğe bağlı)") },
+                            textStyle = MaterialTheme.typography.bodyLarge,
+                            minLines = 2,
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                            colors = transparentFieldColors(),
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }
             }
-            if (state.isInPast) {
-                Text(
-                    text = "Seçilen zaman geçmişte, bu hatırlatıcı için bildirim gelmez.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
+
+            SectionLabel("Ne zaman?")
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                PickerCard(
+                    icon = Icons.Rounded.CalendarMonth,
+                    label = "Tarih",
+                    value = state.date.format(TimeFormats.dateShort),
+                    accent = accent,
+                    onClick = { showDatePicker = true },
+                    modifier = Modifier.weight(1.3f),
+                )
+                PickerCard(
+                    icon = Icons.Rounded.Schedule,
+                    label = "Saat",
+                    value = state.time.format(TimeFormats.time),
+                    accent = accent,
+                    onClick = { showTimePicker = true },
+                    modifier = Modifier.weight(1f),
                 )
             }
-            Button(
-                onClick = { viewModel.save(onBack) },
-                enabled = state.canSave,
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Kaydet") }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                quickPresets().forEach { preset ->
+                    AssistChip(
+                        onClick = { viewModel.onDateTimeChange(preset.dateTime()) },
+                        label = { Text(preset.label) },
+                        leadingIcon = {
+                            Icon(preset.icon, contentDescription = null, modifier = Modifier.size(AssistChipDefaults.IconSize))
+                        },
+                    )
+                }
+            }
+            if (state.isInPast) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Rounded.WarningAmber,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "Seçilen zaman geçmişte, bildirim gelmez.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+
+            SectionLabel("Tekrar")
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                RepeatRule.entries.forEach { rule ->
+                    FilterChip(
+                        selected = state.repeat == rule,
+                        onClick = { viewModel.onRepeatChange(rule) },
+                        label = { Text(rule.label) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = accent.copy(alpha = 0.18f),
+                            selectedLabelColor = MaterialTheme.colorScheme.onSurface,
+                        ),
+                    )
+                }
+            }
+
+            SectionLabel("Renk")
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                ReminderPalette.colors.forEachIndexed { index, color ->
+                    ColorDot(
+                        color = color,
+                        selected = state.colorIndex == index,
+                        onClick = { viewModel.onColorChange(index) },
+                    )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
         }
     }
 
@@ -222,3 +322,91 @@ fun EditReminderScreen(
         )
     }
 }
+
+@Composable
+private fun transparentFieldColors() = TextFieldDefaults.colors(
+    focusedContainerColor = Color.Transparent,
+    unfocusedContainerColor = Color.Transparent,
+    focusedIndicatorColor = Color.Transparent,
+    unfocusedIndicatorColor = Color.Transparent,
+)
+
+@Composable
+private fun SectionLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 4.dp, top = 8.dp),
+    )
+}
+
+@Composable
+private fun PickerCard(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    accent: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shadowElevation = 1.dp,
+        modifier = modifier,
+    ) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier.size(38.dp).clip(CircleShape).background(accent.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(20.dp))
+            }
+            Spacer(Modifier.width(10.dp))
+            Column {
+                Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(value, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ColorDot(color: Color, selected: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(38.dp)
+            .clip(CircleShape)
+            .then(
+                if (selected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f), CircleShape) else Modifier,
+            )
+            .padding(4.dp)
+            .clip(CircleShape)
+            .background(color)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (selected) Icon(Icons.Rounded.Check, contentDescription = "Seçili", tint = Color.White, modifier = Modifier.size(18.dp))
+    }
+}
+
+private class QuickPreset(val label: String, val icon: ImageVector, val dateTime: () -> LocalDateTime)
+
+private fun quickPresets(): List<QuickPreset> = listOf(
+    QuickPreset("1 saat sonra", Icons.Rounded.HourglassTop) {
+        val t = LocalDateTime.now().plusHours(1)
+        t.withMinute((t.minute / 5) * 5)
+    },
+    QuickPreset("Bu akşam", Icons.Rounded.Bedtime) {
+        val evening = LocalDate.now().atTime(20, 0)
+        if (evening.isAfter(LocalDateTime.now())) evening else evening.plusDays(1)
+    },
+    QuickPreset("Yarın sabah", Icons.Rounded.WbSunny) {
+        LocalDate.now().plusDays(1).atTime(9, 0)
+    },
+    QuickPreset("Hafta sonu", Icons.Rounded.Weekend) {
+        LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.SATURDAY)).atTime(10, 0)
+    },
+)

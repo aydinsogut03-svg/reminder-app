@@ -12,6 +12,8 @@ val TurkishLocale: Locale = Locale.forLanguageTag("tr-TR")
 object TimeFormats {
     val date: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy, EEE", TurkishLocale)
     val dayTitle: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM, EEEE", TurkishLocale)
+    val dayMonthYear: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", TurkishLocale)
+    val dateShort: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM, EEE", TurkishLocale)
     val time: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm", TurkishLocale)
     val month: DateTimeFormatter = DateTimeFormatter.ofPattern("LLLL yyyy", TurkishLocale)
     val short: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM EEE, HH:mm", TurkishLocale)

@@ -2,7 +2,7 @@
 
 Android hatırlatıcı uygulaması: bildirim gönderir, ana ekran widget'ı vardır ve takvimde günlere not düşmeyi sağlar.
 
-## Özellikler (v0.1)
+## Özellikler (v0.2)
 
 - Hatırlatıcı ekleme, düzenleme, silme (başlık, not, tarih, saat)
 - Zamanı gelince bildirim, bildirimden **Tamamlandı** ve **10 dk ertele**
@@ -10,12 +10,11 @@ Android hatırlatıcı uygulaması: bildirim gönderir, ana ekran widget'ı vard
 - Aylık takvim: notu olan günler işaretli, bir güne dokununca o günün notları ve "Not ekle"
 - Ana ekran widget'ı: yaklaşan hatırlatıcılar ve hızlı ekleme
 - Telefon yeniden başlayınca alarmlar korunur
+- Yeni tasarım: renkli kartlar, günlere göre gruplu liste, özet kartları, kaydırarak tamamla/sil (geri alınabilir), hızlı zaman seçimleri, her hatırlatıcıya renk, açık ve karanlık tema
 
 ## APK'yı indirme
 
-Her `main` push'unda GitHub Actions debug APK derler:
-**Actions** sekmesi → son "APK derle" çalışması → sayfanın altındaki **Artifacts** bölümünden `hatirlatici-debug-apk` dosyasını indir, zip'i aç, `app-debug.apk`'yı telefona kur
-(telefonda "bilinmeyen kaynaklardan yükleme" izni gerekir).
+Her `main` push'unda GitHub Actions debug APK derler ve **Releases → Son sürüm** sayfasına `hatirlatici.apk` olarak koyar. Telefondan indirip kur ("bilinmeyen kaynaklardan yükleme" izni gerekir). Tüm sürümler aynı anahtarla imzalandığı için yeni APK eskisinin üzerine kurulur.
 
 ## Teknik yapı
 

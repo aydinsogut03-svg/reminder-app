@@ -12,7 +12,9 @@ class AppContainer(context: Context) {
     private val appContext = context.applicationContext
 
     val database: AppDatabase by lazy {
-        Room.databaseBuilder(appContext, AppDatabase::class.java, "reminders.db").build()
+        Room.databaseBuilder(appContext, AppDatabase::class.java, "reminders.db")
+            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .build()
     }
 
     val scheduler: AlarmScheduler by lazy { AlarmScheduler(appContext) }

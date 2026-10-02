@@ -46,6 +46,13 @@ class ReminderRepository(
         refreshWidget()
     }
 
+    /** Silmeyi geri almak için hatırlatıcıyı aynı kimlikle geri ekler. */
+    suspend fun restore(reminder: Reminder) {
+        dao.insert(reminder)
+        scheduler.schedule(reminder)
+        refreshWidget()
+    }
+
     suspend fun setDone(id: Long, done: Boolean) {
         dao.setDone(id, done)
         val reminder = dao.getById(id) ?: return

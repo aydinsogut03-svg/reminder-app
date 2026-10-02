@@ -23,6 +23,7 @@ data class EditUiState(
     val date: LocalDate,
     val time: LocalTime,
     val repeat: RepeatRule = RepeatRule.NONE,
+    val colorIndex: Int = 0,
     val createdAt: Long? = null,
 ) {
     val isNew: Boolean get() = id == 0L
@@ -57,6 +58,7 @@ class EditReminderViewModel(
                         date = dateTime.toLocalDate(),
                         time = dateTime.toLocalTime().withSecond(0).withNano(0),
                         repeat = reminder.repeat,
+                        colorIndex = reminder.colorIndex,
                         createdAt = reminder.createdAt,
                     )
                 }
@@ -74,6 +76,12 @@ class EditReminderViewModel(
 
     fun onRepeatChange(value: RepeatRule) = _state.update { it.copy(repeat = value) }
 
+    fun onColorChange(value: Int) = _state.update { it.copy(colorIndex = value) }
+
+    fun onDateTimeChange(value: LocalDateTime) = _state.update {
+        it.copy(date = value.toLocalDate(), time = value.toLocalTime().withSecond(0).withNano(0))
+    }
+
     fun save(onSaved: () -> Unit) {
         val s = _state.value
         if (!s.canSave) return
@@ -85,6 +93,7 @@ class EditReminderViewModel(
                     note = s.note.trim(),
                     triggerAt = s.triggerAt,
                     repeat = s.repeat,
+                    colorIndex = s.colorIndex,
                     isDone = false,
                     createdAt = s.createdAt ?: System.currentTimeMillis(),
                 ),
