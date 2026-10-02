@@ -40,6 +40,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
@@ -60,7 +61,7 @@ import kotlinx.coroutines.delay
 private enum class ModelState { CHECKING, DOWNLOADING, READY, FAILED }
 
 /** S Pen ya da parmakla el yazısı; yazılanı metne çevirip hatırlatıcıya dönüştürür. */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun InkScreen(
     onClose: () -> Unit,
