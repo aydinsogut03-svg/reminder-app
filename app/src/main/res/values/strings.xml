@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Hatırlatıcı</string>
+    <string name="widget_description">Yaklaşan hatırlatıcılarını ana ekranda gösterir</string>
+</resources>
